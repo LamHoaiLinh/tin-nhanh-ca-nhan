@@ -1,0 +1,898 @@
+Bạn là Senior Full-stack Developer có kinh nghiệm xây dựng hệ thống tổng hợp tin RSS, xử lý dữ liệu tiếng Việt, phát hiện nội dung trùng lặp và triển khai ứng dụng production.
+Hãy tạo cho tôi một dự án web hoàn chỉnh có tên:
+
+# TIN NHANH CÁ NHÂN
+
+Mục tiêu của phần mềm là tự động lấy tin từ các đường dẫn RSS do người dùng thêm, loại bỏ tin trùng, lọc và chấm điểm tin theo sở thích bằng thuật toán thông thường, không sử dụng AI, không gọi OpenAI, Gemini, Claude hoặc bất kỳ API AI trả phí nào.
+Phải tạo toàn bộ source code, cấu hình Supabase, Supabase Edge Functions, GitHub Actions, cấu hình Render, tài liệu triển khai và đóng gói thành một file ZIP duy nhất.
+
+# 1. NGUYÊN TẮC BẮT BUỘC
+
+* Không sử dụng AI hoặc API AI.
+* Không dùng embedding, mô hình ngôn ngữ hoặc dịch vụ tóm tắt trả phí.
+* Không sao chép toàn bộ nội dung bài báo.
+* Chỉ lưu dữ liệu được cung cấp trong RSS gồm tiêu đề, mô tả ngắn, ảnh, ngày đăng, nguồn và link bài gốc.
+* Khi người dùng bấm đọc, mở bài viết trên website gốc.
+* Mọi thuật toán lọc phải xác định được, kiểm thử được và giải thích được.
+* Ưu tiên chạy được trên gói miễn phí.
+* Giao diện hoàn toàn bằng tiếng Việt.
+* Múi giờ mặc định: Asia/Ho_Chi_Minh.
+* Responsive tốt trên iPhone 14 Pro Max và laptop.
+
+# 2. KIẾN TRÚC KỸ THUẬT
+
+Sử dụng:
+
+* Frontend: React + Vite + TypeScript.
+* CSS: CSS Modules hoặc CSS thuần, không dùng framework giao diện nặng.
+* Database: Supabase PostgreSQL.
+* Đăng nhập: Supabase Auth bằng email và mật khẩu.
+* Xử lý RSS phía server: Supabase Edge Function.
+* Lịch quét tự động: GitHub Actions.
+* Hosting frontend: Render Static Site.
+* Quản lý source code: GitHub.
+* Kiểm thử: Vitest.
+  Không xây dựng một backend Render riêng nếu Supabase Edge Function đã đáp ứng được yêu cầu.
+
+# 3. CẤU TRÚC DỰ ÁN
+
+Tạo cấu trúc rõ ràng:
+
+```text
+tin-nhanh-ca-nhan/
+├─ src/
+│  ├─ components/
+│  ├─ pages/
+│  ├─ hooks/
+│  ├─ services/
+│  ├─ algorithms/
+│  ├─ types/
+│  ├─ utils/
+│  ├─ styles/
+│  └─ assets/
+├─ public/
+├─ supabase/
+│  ├─ migrations/
+│  ├─ functions/
+│  │  ├─ scan-rss/
+│  │  ├─ validate-feed/
+│  │  └─ discover-feed/
+│  └─ seed.sql
+├─ scripts/
+│  ├─ seed-sources.ts
+│  └─ cleanup-old-articles.ts
+├─ tests/
+├─ .github/
+│  └─ workflows/
+│     ├─ scan-rss.yml
+│     └─ test-build.yml
+├─ render.yaml
+├─ .env.example
+├─ package.json
+├─ run_local.bat
+├─ build.bat
+├─ README.md
+└─ HUONG_DAN_TRIEN_KHAI.md
+```
+
+# 4. QUẢN LÝ NGUỒN RSS
+
+Tạo màn hình “Nguồn tin” cho phép:
+
+* Thêm nguồn RSS thủ công.
+* Dán trực tiếp URL RSS XML.
+* Dán URL website hoặc trang danh sách RSS để hệ thống tự tìm feed.
+* Sửa tên nguồn.
+* Chọn chuyên mục.
+* Chọn mức ưu tiên nguồn từ 1 đến 10.
+* Bật hoặc tắt nguồn.
+* Quét ngay một nguồn.
+* Quét ngay toàn bộ nguồn.
+* Xóa nguồn.
+* Hiển thị lần quét gần nhất.
+* Hiển thị số bài lấy được.
+* Hiển thị trạng thái thành công hoặc lỗi.
+* Hiển thị nội dung lỗi ngắn gọn, dễ hiểu.
+  Khi thêm nguồn phải có nút “Kiểm tra RSS”.
+  Kết quả kiểm tra cần cho biết:
+* RSS hợp lệ hay không.
+* Tên feed.
+* Website gốc.
+* Số bài thử đọc được.
+* Ngày bài mới nhất.
+* Có ảnh hay không.
+* Định dạng RSS 2.0, Atom hoặc RDF.
+  Nếu người dùng dán URL website thay vì URL RSS, Edge Function `discover-feed` thực hiện:
+
+1. Kiểm tra URL có trả XML hợp lệ không.
+2. Nếu là HTML, tìm thẻ `link rel="alternate"` có kiểu RSS hoặc Atom.
+3. Thử các đường dẫn RSS thông dụng.
+4. Nếu tìm thấy nhiều feed, trả về danh sách để người dùng chọn.
+5. Không tự thêm nguồn khi chưa kiểm tra thành công.
+
+# 5. NGUỒN TIN CÓ SẴN
+
+Tạo dữ liệu nguồn mẫu để người dùng có thể bật hoặc tắt nhanh.
+Nhóm báo tổng hợp:
+
+* VnExpress.
+* Tuổi Trẻ.
+* Thanh Niên.
+* VietnamNet.
+* Dân Trí.
+* Lao Động.
+* Pháp Luật TP.HCM.
+  Nhóm nguồn chính thức và chuyên ngành:
+* Báo Chính phủ.
+* Bộ Tài chính.
+* Cơ quan Thuế.
+* Bảo hiểm xã hội Việt Nam.
+* Bộ Nội vụ.
+* Nguồn pháp luật và văn bản mới.
+* Nguồn giao thông, ô tô và đào tạo lái xe.
+  Chỉ đưa URL RSS chính thức đã kiểm tra thành công vào danh sách kích hoạt sẵn.
+  Nguồn chưa xác nhận có RSS hợp lệ phải để trạng thái “Chưa kích hoạt”, không dùng URL giả và không dùng dịch vụ RSS trung gian không rõ nguồn gốc.
+  Tạo file `seed_sources.json` hoặc `seed.sql` để dễ bổ sung nguồn sau này.
+
+# 6. DỮ LIỆU CƠ SỞ
+
+Tạo các bảng:
+
+## profiles
+
+* id.
+* email.
+* display_name.
+* created_at.
+
+## sources
+
+* id.
+* user_id.
+* name.
+* feed_url.
+* website_url.
+* logo_url.
+* category.
+* priority từ 1 đến 10.
+* enabled.
+* last_scanned_at.
+* last_success_at.
+* last_status.
+* last_error.
+* consecutive_errors.
+* created_at.
+* updated_at.
+
+## articles
+
+* id.
+* source_id.
+* guid.
+* original_url.
+* canonical_url.
+* title.
+* normalized_title.
+* description.
+* image_url.
+* author.
+* category.
+* published_at.
+* fetched_at.
+* url_hash.
+* title_hash.
+* simhash.
+* relevance_score.
+* duplicate_of.
+* duplicate_count.
+* created_at.
+
+## article_states
+
+* id.
+* user_id.
+* article_id.
+* is_read.
+* is_saved.
+* is_hidden.
+* opened_at.
+* created_at.
+* updated_at.
+
+## keyword_rules
+
+* id.
+* user_id.
+* keyword.
+* rule_type gồm `positive`, `negative`, `required`.
+* target_field gồm `title`, `description`, `all`.
+* weight.
+* enabled.
+
+## category_preferences
+
+* id.
+* user_id.
+* category.
+* weight từ 0 đến 10.
+* enabled.
+
+## user_settings
+
+* user_id.
+* scan_interval_minutes.
+* article_retention_days.
+* page_size.
+* duplicate_threshold.
+* default_sort.
+* show_hidden.
+* image_fallback_mode.
+
+## scan_logs
+
+* id.
+* source_id.
+* started_at.
+* completed_at.
+* items_received.
+* items_inserted.
+* duplicates_found.
+* status.
+* error_message.
+  Tạo index cho:
+* canonical_url.
+* url_hash.
+* title_hash.
+* published_at.
+* source_id.
+* duplicate_of.
+* user_id.
+
+# 7. ROW LEVEL SECURITY
+
+Bật RLS cho tất cả bảng người dùng truy cập.
+Yêu cầu:
+
+* Người dùng chỉ đọc và sửa dữ liệu thuộc tài khoản của mình.
+* Người chưa đăng nhập không được thêm, sửa hoặc xóa nguồn.
+* Không đưa Supabase service role key vào frontend.
+* Frontend chỉ sử dụng Supabase publishable key.
+* Service role chỉ được lưu trong Supabase Edge Function secrets.
+* GitHub Actions không cần giữ service role nếu có thể gọi Edge Function bằng `CRON_SECRET`.
+* Viết đầy đủ SQL policy trong migration.
+
+# 8. THUẬT TOÁN CHUẨN HÓA URL
+
+Trước khi lưu bài viết:
+
+1. Chuyển hostname về chữ thường.
+2. Bỏ `www.` khi phù hợp.
+3. Bỏ dấu `/` cuối URL.
+4. Xóa fragment sau dấu `#`.
+5. Xóa các tham số theo dõi:
+
+```text
+utm_source
+utm_medium
+utm_campaign
+utm_term
+utm_content
+fbclid
+gclid
+ref
+source
+campaign
+```
+
+6. Sắp xếp query parameter còn lại theo tên.
+7. Giải mã các ký tự URL an toàn.
+8. Tạo SHA-256 từ canonical URL.
+   Không xóa các query parameter có thể làm thay đổi nội dung bài viết.
+
+# 9. THUẬT TOÁN CHUẨN HÓA TIÊU ĐỀ TIẾNG VIỆT
+
+Tạo hai phiên bản:
+
+* Bản hiển thị: giữ nguyên tiếng Việt.
+* Bản so sánh: chuẩn hóa để lọc trùng.
+  Quy trình chuẩn hóa:
+
+1. Unicode normalize dạng NFKC.
+2. Chuyển chữ thường.
+3. Thay chữ `đ` thành `d`.
+4. Loại dấu tiếng Việt trong bản dùng để so sánh.
+5. Loại HTML entity.
+6. Loại emoji.
+7. Loại dấu câu.
+8. Loại khoảng trắng thừa.
+9. Loại các tiền tố lặp lại như:
+
+```text
+tin mới
+tin nóng
+mới nhất
+cập nhật
+video
+ảnh
+trực tiếp
+breaking news
+```
+
+10. Tách từ.
+11. Loại stopword tiếng Việt thông dụng nhưng không được loại các từ quan trọng như tên cơ quan, số văn bản, mức tiền, ngày tháng.
+
+# 10. THUẬT TOÁN LỌC TIN TRÙNG
+
+Thực hiện theo nhiều tầng, hoàn toàn không dùng AI.
+
+## Tầng 1: Trùng tuyệt đối
+
+Đánh dấu trùng khi một trong các điều kiện đúng:
+
+* Cùng GUID trong cùng nguồn.
+* Cùng canonical URL.
+* Cùng URL hash.
+* Cùng normalized title hoàn toàn trong vòng 7 ngày.
+
+## Tầng 2: SimHash
+
+Tạo SimHash 64-bit từ:
+
+```text
+normalized_title + description đã chuẩn hóa
+```
+
+So sánh các bài đăng trong vòng 72 giờ.
+Xem là ứng viên trùng khi Hamming Distance nhỏ hơn hoặc bằng 3.
+
+## Tầng 3: Jaccard Similarity
+
+Tạo tập token từ tiêu đề.
+
+```text
+Jaccard = số token giao nhau / số token hợp nhau
+```
+
+Xem là trùng khi:
+
+* Jaccard tiêu đề từ 0,82 trở lên.
+* Thời gian đăng cách nhau không quá 72 giờ.
+* Có ít nhất 5 token có ý nghĩa.
+
+## Tầng 4: Character N-gram
+
+Dùng cosine similarity trên character 3-gram của tiêu đề đã chuẩn hóa.
+Xem là ứng viên trùng khi điểm từ 0,88 trở lên.
+
+## Quy tắc quyết định cuối
+
+Hai bài được xem là cùng một tin khi:
+
+* Trùng URL hoặc GUID; hoặc
+* SimHash đạt ngưỡng và Jaccard đạt ngưỡng; hoặc
+* Jaccard từ 0,90 trở lên; hoặc
+* Character 3-gram từ 0,92 trở lên và đăng trong cùng ngày.
+  Không chỉ dựa vào một vài từ chung như “thuế”, “doanh nghiệp”, “tai nạn”, “TP.HCM”.
+
+## Chọn bài đại diện
+
+Khi nhiều báo đăng cùng nội dung, chọn bài đại diện theo điểm:
+
+```text
+Điểm đại diện =
+30 × mức ưu tiên nguồn
++ 20 nếu có ảnh
++ tối đa 20 điểm cho mô tả đầy đủ
++ tối đa 15 điểm cho bài đăng sớm
++ 10 nếu URL và ngày đăng hợp lệ
++ 5 nếu có tác giả
+```
+
+Chuẩn hóa mức ưu tiên nguồn về thang 0–1 trước khi nhân.
+Các bài còn lại không bị xóa hoàn toàn mà lưu `duplicate_of`.
+Trên giao diện hiển thị:
+
+```text
+4 nguồn cùng đăng tin này
+```
+
+Khi bấm vào, người dùng xem được các nguồn còn lại.
+
+# 11. THUẬT TOÁN LỌC VÀ CHẤM ĐIỂM TIN
+
+Không dùng máy học.
+Mỗi bài có điểm từ 0 đến 100.
+
+## Bộ lọc cứng
+
+Loại khỏi danh sách chính khi:
+
+* Nguồn bị tắt.
+* Bài quá thời hạn lưu trữ.
+* Không có tiêu đề.
+* Tiêu đề dưới 8 ký tự.
+* Có từ khóa chặn.
+* Là bản trùng không được chọn làm đại diện.
+* URL không hợp lệ.
+* Ngày đăng quá xa trong tương lai.
+
+## Công thức chấm điểm
+
+```text
+Điểm phù hợp =
+Điểm chuyên mục
++ Điểm từ khóa tích cực
++ Điểm nguồn
++ Điểm độ mới
++ Điểm chất lượng dữ liệu
+- Điểm từ khóa tiêu cực
+```
+
+## Điểm chuyên mục: tối đa 25
+
+```text
+categoryScore = categoryWeight / 10 × 25
+```
+
+## Điểm từ khóa tích cực: tối đa 30
+
+* Từ khóa xuất hiện trong tiêu đề: trọng số × 3.
+* Từ khóa xuất hiện trong mô tả: trọng số × 1.
+* Cụm từ chính xác được cộng thêm 20%.
+* Mỗi từ khóa chỉ tính một lần cho mỗi trường.
+* Tổng không vượt quá 30.
+
+## Điểm nguồn: tối đa 15
+
+```text
+sourceScore = sourcePriority / 10 × 15
+```
+
+## Điểm độ mới: tối đa 20
+
+Áp dụng suy giảm theo thời gian:
+
+```text
+freshnessScore = 20 × e^(-ageHours / halfLifeHours)
+```
+
+Mặc định:
+
+* Tin thời sự: half-life 24 giờ.
+* Luật, thuế, kế toán: half-life 120 giờ.
+* Công nghệ: half-life 72 giờ.
+* Bài hướng dẫn: half-life 240 giờ.
+
+## Điểm chất lượng: tối đa 10
+
+* Có ảnh: +2.
+* Có mô tả trên 100 ký tự: +2.
+* Có ngày đăng hợp lệ: +2.
+* Có tác giả: +1.
+* URL HTTPS: +1.
+* Tiêu đề không giật gân: +2.
+
+## Điểm tiêu cực
+
+* Từ khóa tiêu cực trong tiêu đề: trừ trọng số × 5.
+* Từ khóa tiêu cực trong mô tả: trừ trọng số × 2.
+* Từ khóa loại trừ tuyệt đối: đặt điểm bằng -100 và ẩn bài.
+  Điểm cuối cùng giới hạn trong khoảng 0–100.
+
+# 12. SỞ THÍCH MẶC ĐỊNH
+
+Tạo sẵn các chuyên mục:
+
+* Thuế và kế toán.
+* Hóa đơn điện tử.
+* Pháp luật doanh nghiệp.
+* Lao động, tiền lương và bảo hiểm xã hội.
+* Quản trị doanh nghiệp.
+* Tài chính và kinh tế.
+* Giao thông và đào tạo lái xe.
+* Ô tô.
+* Công nghệ.
+* AI và tự động hóa.
+* Excel, VBA và Python.
+* Giáo dục.
+* Sức khỏe.
+* Thể thao.
+* Giải trí.
+  Đặt trọng số mặc định:
+
+```text
+Thuế và kế toán: 10
+Hóa đơn điện tử: 10
+Pháp luật doanh nghiệp: 9
+Lao động và BHXH: 9
+Giao thông và đào tạo lái xe: 9
+Quản trị doanh nghiệp: 8
+AI và tự động hóa: 8
+Excel, VBA và Python: 8
+Tài chính và kinh tế: 7
+Ô tô: 6
+Giáo dục: 5
+Sức khỏe: 5
+Thể thao: 2
+Giải trí: 1
+```
+
+Tạo từ khóa mẫu:
+
+```text
+thuế
+hóa đơn điện tử
+nghị định
+thông tư
+quyết định
+báo cáo tài chính
+quyết toán
+bảo hiểm xã hội
+tiền lương
+tai nạn lao động
+doanh nghiệp
+đào tạo lái xe
+sát hạch lái xe
+giấy phép lái xe
+giao thông
+ô tô
+trí tuệ nhân tạo
+tự động hóa
+Excel
+VBA
+Python
+```
+
+Người dùng phải sửa, thêm, xóa và thay đổi trọng số được.
+Hỗ trợ tìm kiếm không phân biệt dấu tiếng Việt.
+
+# 13. XỬ LÝ HÌNH ẢNH
+
+Lấy ảnh theo thứ tự:
+
+1. `media:content`.
+2. `media:thumbnail`.
+3. `enclosure` có MIME type hình ảnh.
+4. Ảnh đầu tiên trong `content`.
+5. Ảnh đầu tiên trong `description`.
+6. Logo của nguồn báo.
+7. Hình placeholder theo chuyên mục.
+   Yêu cầu:
+
+* Kiểm tra URL ảnh hợp lệ.
+* Dùng lazy loading.
+* Có ảnh fallback khi ảnh lỗi.
+* Không làm vỡ bố cục khi ảnh có tỷ lệ khác nhau.
+* Không tải ảnh về Supabase Storage trong phiên bản đầu.
+* Chỉ lưu URL ảnh gốc.
+* Không dùng ảnh đại diện giả tạo bằng AI.
+
+# 14. GIAO DIỆN TRANG CHÍNH
+
+Thiết kế đơn giản, hiện đại, dễ đọc.
+
+## Thanh trên
+
+* Logo “Tin Nhanh”.
+* Ô tìm kiếm.
+* Nút bộ lọc.
+* Nút nguồn tin.
+* Nút cài đặt.
+* Thông tin lần cập nhật gần nhất.
+
+## Bộ lọc nhanh
+
+* Phù hợp nhất.
+* Mới nhất.
+* Chưa đọc.
+* Đã lưu.
+* Theo chuyên mục.
+* Theo nguồn.
+* Điểm tối thiểu.
+* Khoảng ngày.
+
+## Thẻ tin
+
+Mỗi thẻ hiển thị:
+
+* Ảnh bài viết hoặc logo báo.
+* Tên nguồn.
+* Logo nguồn.
+* Chuyên mục.
+* Thời gian đăng dạng “15 phút trước”.
+* Tiêu đề.
+* Mô tả tối đa 2–3 dòng.
+* Điểm phù hợp.
+* Các từ khóa đã khớp.
+* Nhãn “3 nguồn cùng đăng” nếu có.
+* Nút đọc bài gốc.
+* Nút lưu.
+* Nút đánh dấu đã đọc hoặc chưa đọc.
+* Nút ẩn bài.
+* Nút chặn nguồn.
+* Nút chặn chủ đề hoặc từ khóa.
+  Khi hiển thị điểm, có tooltip giải thích:
+
+```text
+Chuyên mục: 22
+Từ khóa: 25
+Nguồn: 12
+Độ mới: 18
+Chất lượng: 7
+Tổng: 84
+```
+
+# 15. THANH ĐIỀU HƯỚNG CỐ ĐỊNH PHÍA DƯỚI
+
+Đây là yêu cầu bắt buộc.
+Tạo thanh điều hướng cố định sát đáy màn hình.
+Trên trang danh sách:
+
+* Nút “Trang trước”.
+* Hiển thị “Trang 2/15”.
+* Nút “Trang sau”.
+* Nút lên đầu trang.
+  Trên trang xem chi tiết:
+* Nút “Quay lại”.
+* Nút “Bài trước”.
+* Nút “Bài tiếp theo”.
+* Nút “Mở báo gốc”.
+  Yêu cầu:
+* Luôn nhìn thấy trên điện thoại và laptop.
+* Không che nội dung.
+* Phần nội dung phải có `padding-bottom` tương ứng.
+* Hỗ trợ `env(safe-area-inset-bottom)` trên iPhone.
+* Nút bấm tối thiểu 44 × 44 CSS pixel.
+* Khi đang ở trang đầu, nút Trang trước bị vô hiệu hóa.
+* Khi đang ở trang cuối, nút Trang sau bị vô hiệu hóa.
+* Giữ nguyên bộ lọc và vị trí trang khi quay lại.
+
+# 16. RESPONSIVE
+
+## iPhone 14 Pro Max
+
+* Một cột.
+* Ảnh nằm trên hoặc bên trái tùy chiều rộng.
+* Không tràn ngang.
+* Không có chữ quá nhỏ.
+* Thanh dưới không bị thanh Home Indicator che.
+* Hỗ trợ màn hình dọc và ngang.
+* Bộ lọc mở dạng bottom sheet.
+* Nút đóng bottom sheet luôn nhìn thấy.
+
+## Laptop
+
+* Hai hoặc ba cột tùy chiều rộng.
+* Chiều rộng nội dung tối đa khoảng 1.400px.
+* Thanh điều hướng dưới nằm giữa màn hình.
+* Có thể dùng bàn phím:
+
+```text
+Mũi tên trái: trang trước hoặc bài trước
+Mũi tên phải: trang sau hoặc bài tiếp
+S: lưu bài
+R: đánh dấu đã đọc
+Esc: quay lại
+```
+
+# 17. QUÉT RSS TỰ ĐỘNG
+
+Tạo Edge Function `scan-rss`.
+Hỗ trợ:
+
+* Quét một nguồn.
+* Quét toàn bộ nguồn đang bật.
+* Quét thủ công từ giao diện.
+* Quét định kỳ từ GitHub Actions.
+* Timeout từng nguồn.
+* Retry tối đa 2 lần.
+* Không để một nguồn lỗi làm dừng toàn bộ quá trình.
+* Ghi scan log.
+* Tự tắt nguồn sau 10 lần lỗi liên tiếp nhưng phải thông báo cho người dùng.
+  GitHub Actions:
+* Chạy vào phút 17 và 47 mỗi giờ.
+* Có `workflow_dispatch` để chạy thủ công.
+* Dùng `concurrency` để không chạy chồng nhiều lần.
+* Gọi Supabase Edge Function bằng `CRON_SECRET`.
+* Không ghi khóa bí mật vào source code.
+  Mẫu lịch:
+
+```yaml
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+```
+
+# 18. BẢO MẬT KHI LẤY URL
+
+Do người dùng được nhập URL tùy ý, phải chống SSRF.
+Edge Function phải:
+
+* Chỉ cho phép giao thức HTTP và HTTPS.
+* Chặn localhost.
+* Chặn IP loopback.
+* Chặn IP private.
+* Chặn metadata endpoint của dịch vụ cloud.
+* Chặn URL có username hoặc password.
+* Giới hạn tối đa 3 redirect.
+* Timeout tối đa 10 giây.
+* Giới hạn response tối đa 2 MB.
+* Chỉ chấp nhận XML, RSS, Atom hoặc HTML trong chức năng tìm feed.
+* Không thực thi JavaScript từ nguồn ngoài.
+* Không render HTML chưa làm sạch.
+* Sanitize description trước khi lưu và hiển thị.
+* Rate limit chức năng “Quét ngay”.
+
+# 19. PHÂN TRANG VÀ HIỆU NĂNG
+
+* Mặc định 20 bài mỗi trang.
+* Cho phép chọn 10, 20, 30 hoặc 50 bài.
+* Phân trang phía server.
+* Không tải toàn bộ dữ liệu một lần.
+* Sắp xếp bằng truy vấn Supabase.
+* Debounce ô tìm kiếm 300 ms.
+* Lazy load ảnh.
+* Cache dữ liệu trang vừa xem bằng React Query hoặc giải pháp nhẹ tương đương.
+* Giữ dữ liệu cũ trong lúc tải trang mới để tránh giật giao diện.
+* Hiển thị skeleton loading.
+
+# 20. DỌN DỮ LIỆU
+
+* Mặc định giữ bài 60 ngày.
+* Bài đã lưu không tự động xóa.
+* Bản trùng có thể xóa sau 30 ngày nếu bài đại diện không được lưu.
+* Tạo script dọn dữ liệu.
+* Có thể gọi script bằng GitHub Actions mỗi ngày.
+* Không xóa source hoặc keyword rule.
+
+# 21. XỬ LÝ LỖI
+
+Phải xử lý:
+
+* RSS XML lỗi.
+* Feed trả về HTML.
+* Feed bị chuyển hướng.
+* Feed dùng encoding không chuẩn.
+* Thiếu ngày đăng.
+* Thiếu GUID.
+* Thiếu ảnh.
+* Tiêu đề chứa HTML.
+* Nguồn trả HTTP 403, 404, 429 hoặc 500.
+* Mạng timeout.
+* Bài có URL tương đối.
+* Một feed chứa hàng nghìn bài.
+* Feed lặp lại cùng bài ở mỗi lần quét.
+  Thông báo lỗi bằng tiếng Việt, không hiển thị stack trace cho người dùng.
+
+# 22. KIỂM THỬ
+
+Viết unit test cho:
+
+* Chuẩn hóa URL.
+* Xóa tracking parameter.
+* Chuẩn hóa tiêu đề tiếng Việt.
+* So sánh không dấu.
+* Tính Jaccard.
+* Tính character 3-gram cosine.
+* Tạo và so sánh SimHash.
+* Xác định bài trùng.
+* Chọn bài đại diện.
+* Tính điểm chuyên mục.
+* Tính điểm từ khóa.
+* Tính điểm độ mới.
+* Lấy ảnh từ các trường RSS khác nhau.
+* Chặn URL private và localhost.
+  Tạo dữ liệu kiểm thử gồm:
+* Hai bài cùng URL.
+* Hai bài khác URL nhưng cùng tiêu đề.
+* Hai báo viết cùng một sự kiện với tiêu đề khác nhẹ.
+* Hai bài có nhiều từ giống nhau nhưng khác sự kiện.
+* Một bài không dấu và một bài có dấu.
+* Một bài không có ảnh.
+* Một bài không có ngày.
+
+# 23. TIÊU CHÍ NGHIỆM THU
+
+Dự án chỉ được xem là hoàn thành khi:
+
+1. Người dùng đăng nhập được.
+2. Người dùng thêm được RSS mới.
+3. Hệ thống kiểm tra được RSS trước khi lưu.
+4. Có thể quét RSS thủ công.
+5. GitHub Actions quét RSS tự động.
+6. Tin mới được lưu vào Supabase.
+7. Tin trùng được gom đúng.
+8. Bài đại diện được chọn đúng.
+9. Từ khóa tích cực làm tăng điểm.
+10. Từ khóa tiêu cực làm giảm điểm hoặc ẩn bài.
+11. Có ảnh hoặc logo báo trên mọi thẻ.
+12. Bộ lọc và tìm kiếm hoạt động.
+13. Trang trước và trang sau hoạt động.
+14. Thanh điều hướng dưới luôn cố định.
+15. Thanh điều hướng không che nội dung trên iPhone.
+16. Website hoạt động tốt trên màn hình 390–430px.
+17. Website hoạt động tốt ở 1366×768 và 1920×1080.
+18. Refresh trang không làm mất phiên đăng nhập.
+19. Service role key không xuất hiện trong bundle frontend.
+20. Không có bất kỳ API AI nào trong source code.
+
+# 24. FILE TRIỂN KHAI
+
+Tạo:
+
+* `.env.example` cho frontend.
+* Hướng dẫn tạo Supabase project.
+* Hướng dẫn chạy migration.
+* Hướng dẫn deploy Edge Functions.
+* Hướng dẫn thêm Edge Function secrets.
+* Hướng dẫn tạo tài khoản người dùng đầu tiên.
+* Hướng dẫn thêm GitHub Secrets.
+* Hướng dẫn cấu hình GitHub Actions.
+* Hướng dẫn deploy Render Static Site.
+* `render.yaml`.
+* Redirect rule để React Router không lỗi khi refresh.
+* Build command và publish directory chính xác.
+  Không ghi khóa bí mật thật vào bất kỳ file nào.
+
+# 25. FILE CHẠY TRÊN WINDOWS
+
+Tạo `run_local.bat`:
+
+* Kiểm tra Node.js.
+* Cài dependency nếu chưa có.
+* Sao chép `.env.example` thành `.env.local` nếu chưa tồn tại.
+* Chạy Vite development server.
+  Tạo `build.bat`:
+* Cài dependency.
+* Chạy test.
+* Chạy TypeScript check.
+* Build production.
+* Thông báo rõ thành công hoặc lỗi.
+
+# 26. README
+
+README phải có:
+
+* Mô tả dự án.
+* Kiến trúc.
+* Cách chạy local.
+* Cách cấu hình Supabase.
+* Cách deploy.
+* Cách thêm RSS.
+* Cách thay đổi trọng số.
+* Giải thích thuật toán lọc trùng.
+* Giải thích thuật toán chấm điểm.
+* Cách xử lý khi GitHub Actions không chạy.
+* Cách xử lý nguồn RSS lỗi.
+* Các giới hạn của phương pháp không dùng AI.
+
+# 27. YÊU CẦU CHẤT LƯỢNG CODE
+
+* TypeScript strict mode.
+* Không dùng `any` tùy tiện.
+* Chia module rõ ràng.
+* Hàm thuật toán độc lập với giao diện.
+* Có comment cho phần thuật toán khó.
+* Không viết toàn bộ ứng dụng trong một file.
+* Không để mã thử nghiệm trong production.
+* Không hard-code khóa bí mật.
+* Không bỏ qua lỗi TypeScript.
+* Không tạo dữ liệu giả để che chức năng chưa hoàn thành.
+* Không tuyên bố hoàn thành khi chức năng chưa chạy.
+
+# 28. KẾT QUẢ PHẢI TRẢ VỀ
+
+Hãy trả về:
+
+1. Một file ZIP duy nhất chứa toàn bộ dự án.
+2. Danh sách cấu trúc file.
+3. Hướng dẫn chạy local.
+4. Hướng dẫn tạo Supabase.
+5. Hướng dẫn deploy Render.
+6. Hướng dẫn thiết lập GitHub Actions.
+7. Danh sách biến môi trường.
+8. Tài khoản hoặc quy trình tạo tài khoản quản trị đầu tiên.
+9. Kết quả kiểm thử.
+10. Những giới hạn còn tồn tại.
+    Không chỉ mô tả hoặc đưa ví dụ. Hãy tạo đầy đủ source code production-ready, có thể giải nén, cấu hình biến môi trường và triển khai thực tế.

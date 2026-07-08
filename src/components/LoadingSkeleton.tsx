@@ -1,0 +1,1 @@
+export function LoadingSkeleton({ count = 6 }: {count?:number}) { return <div className="article-grid" aria-label="Đang tải">{Array.from({length:count},(_,i)=><div className="skeleton-card" key={i}><div className="skeleton image"/><div className="skeleton line wide"/><div className="skeleton line"/><div className="skeleton line short"/></div>)}</div>; }

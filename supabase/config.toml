@@ -1,0 +1,10 @@
+project_id = "tin-nhanh-ca-nhan"
+
+[functions.scan-rss]
+verify_jwt = false
+
+[functions.validate-feed]
+verify_jwt = false
+
+[functions.discover-feed]
+verify_jwt = false

@@ -1,0 +1,3 @@
+-- Dữ liệu mặc định cho từng người dùng được tạo tự động bởi trigger public.handle_new_user.
+-- Danh mục nguồn RSS gợi ý được seed trong migration. Không nguồn nào tự động kích hoạt
+-- nếu chưa vượt qua chức năng validate-feed tại thời điểm người dùng thêm.
