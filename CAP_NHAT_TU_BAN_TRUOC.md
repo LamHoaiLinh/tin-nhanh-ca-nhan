@@ -80,3 +80,10 @@ Sau khi cập nhật, cần thực hiện đủ hai việc:
 2. Chờ Render deploy commit mới; khi cần dùng **Manual Deploy > Clear build cache & deploy**.
 
 Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `summarize-article` phải có thời gian cập nhật mới hơn commit này.
+
+## Bổ sung hình trong chế độ tóm tắt
+- Hiển thị hình minh họa gốc của bài báo ngay phía trên nội dung tóm tắt.
+- Hình lấy từ dữ liệu bài báo đã quét, giống hình đang hiển thị trên thẻ tin.
+- Nhấp vào hình sẽ mở bài báo gốc trong tab mới.
+- Nếu máy chủ ảnh từ chối tải hoặc URL ảnh hỏng, khu vực hình tự ẩn để không làm gián đoạn việc đọc.
+- Giao diện ảnh tự co giãn theo desktop và điện thoại.

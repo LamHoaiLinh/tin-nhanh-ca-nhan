@@ -48,12 +48,14 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
   const [loading, setLoading] = useState(false);
   const [technicalError, setTechnicalError] = useState('');
   const [fontScale, setFontScale] = useState<FontScale>(readInitialFont);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const contentRef = useRef<HTMLDivElement>(null);
 
   const result = article ? cache[article.id] ?? null : null;
   const hasPrevious = currentIndex !== null && currentIndex > 0;
   const hasNext = currentIndex !== null && currentIndex < articles.length - 1;
   const positionText = currentIndex === null ? '' : `${currentIndex + 1} / ${articles.length}`;
+  const showHeroImage = Boolean(article?.image_url && !failedImages[article.id]);
 
   const statusText = useMemo(() => {
     if (!result?.warning) return '';
@@ -161,6 +163,24 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
           ) : result ? (
             <article className="summary-content" aria-live="polite">
               {statusText && <div className="summary-source-status">{statusText}</div>}
+              {showHeroImage && (
+                <figure className="summary-hero">
+                  <a
+                    href={article.original_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Mở bài báo gốc trong tab mới"
+                  >
+                    <img
+                      src={article.image_url!}
+                      alt={`Hình minh họa bài: ${article.title}`}
+                      loading="eager"
+                      decoding="async"
+                      onError={() => setFailedImages((current) => ({ ...current, [article.id]: true }))}
+                    />
+                  </a>
+                </figure>
+              )}
               {result.warning && result.extractionMethod === 'rss-description' && (
                 <p className="summary-source-note">{result.warning}</p>
               )}
