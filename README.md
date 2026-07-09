@@ -9,6 +9,7 @@
 - Toàn bộ câu giao tiếp trong ứng dụng dùng cách xưng hô **bạn**.
 - Có trang **Trợ giúp** tiếng Việt hướng dẫn tìm RSS, thêm nguồn, đặt từ khóa, đọc điểm và xử lý lỗi.
 - Có tooltip khi hover/focus ở các trường, nút thao tác và dấu `?`.
+- Có nút **Sao chép link** và **Tóm tắt** ngay trong ứng dụng; thuật toán giữ nguyên câu chữ cốt lõi, ưu tiên số liệu, lập luận và góc nhìn đối chiếu.
 - Sửa hoàn toàn lỗi npm lockfile trỏ vào registry nội bộ; Render dùng registry công khai.
 - Ghim Node bằng `.node-version` để tránh Render tự chọn phiên bản ngoài dự kiến.
 
@@ -49,7 +50,8 @@ React/Vite trên Render
   └─ Supabase Edge Functions
        ├─ validate-feed
        ├─ discover-feed
-       └─ scan-rss
+       ├─ scan-rss
+       └─ summarize-article
 
 GitHub Actions
   ├─ test-build
@@ -68,7 +70,7 @@ supabase/migrations/202607080001_initial.sql
 supabase/migrations/202607090001_verified_default_sources.sql
 ```
 
-3. Deploy ba Edge Functions.
+3. Deploy bốn Edge Functions.
 4. Tạo `CRON_SECRET` trên Supabase và GitHub.
 5. Tạo Render Blueprint từ `render.yaml`.
 6. Điền:
@@ -104,7 +106,7 @@ npm test
 npm run build
 ```
 
-Kết quả bản đóng gói cuối: 8 test files, 35 test cases đạt; TypeScript typecheck và Vite production build đạt.
+Kết quả bản đóng gói cuối: 9 test files, 39 test cases đạt; TypeScript typecheck và Vite production build đạt.
 
 ## Bảo mật và giới hạn
 
@@ -115,4 +117,4 @@ Kết quả bản đóng gói cuối: 8 test files, 35 test cases đạt; TypeSc
 - Dữ liệu RSS và hình ảnh thuộc website nguồn.
 
 ### Tóm tắt bài báo
-Mỗi thẻ tin có một nút `Tóm tắt`. Nút này sao chép URL bài gốc và mở TLDR This trong tab mới. Tiêu đề, hình và nút `Đọc bài gốc` đều mở trực tiếp website của báo.
+Mỗi thẻ tin có nút `Sao chép link` và `Tóm tắt`. Tiêu đề, hình và nút `Đọc bài gốc` mở trực tiếp website của báo. Nút `Tóm tắt` gọi Edge Function `summarize-article`, lấy phần nội dung công khai của bài, trích xuất đoạn chính và tạo bản tóm tắt khoảng 25–35% bằng thuật toán chọn câu. Hệ thống ưu tiên câu có số liệu, dẫn chứng, lập luận đối chiếu và phần kết luận; các câu chuyển ý được thay đổi theo mỗi lần tạo nhưng không thêm quan điểm mới. Không dùng API AI trả phí và không lưu toàn văn bài báo.

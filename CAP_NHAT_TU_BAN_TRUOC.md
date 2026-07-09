@@ -18,7 +18,7 @@ Mở file:
 supabase/migrations/202607090001_verified_default_sources.sql
 ```
 
-Sao chép toàn bộ nội dung, dán vào **Supabase > SQL Editor > New query**, rồi bấm **Run** một lần.
+Sao chép toàn bộ nội dung, dán vào **Supabase > SQL Editor > New query**, rồi bấm **Run** một lần nếu trước đây bạn chưa chạy migration này. Nếu đã chạy thành công thì không chạy lại.
 
 Migration này:
 
@@ -31,7 +31,13 @@ Frontend cũng có cơ chế đồng bộ 9 nguồn mặc định khi người d
 
 ## 3. Edge Functions
 
-Mã Edge Functions không thay đổi về giao thức. Có thể chạy lại workflow **Deploy Supabase Edge Functions** để bảo đảm GitHub và Supabase đồng bộ, nhưng không bắt buộc nếu ba function hiện tại đang hoạt động.
+Bản này thêm Edge Function mới:
+
+```text
+summarize-article
+```
+
+Sau khi upload GitHub, bắt buộc chạy lại workflow **Deploy Supabase Edge Functions** để đưa function mới lên Supabase. Không cần chạy migration SQL mới cho tính năng tóm tắt.
 
 ## 4. Kiểm tra sau cập nhật
 
@@ -42,9 +48,11 @@ Mã Edge Functions không thay đổi về giao thức. Có thể chạy lại w
 - Khi vào giao diện lần đầu, banner báo đang chuẩn bị nguồn và quét tin.
 - Render không còn truy cập registry npm nội bộ; Node được ghim bằng `.node-version`.
 
-## Cập nhật mở bài gốc và tóm tắt bằng TLDR This
-- Khi bấm tiêu đề hoặc hình của bài, ứng dụng mở trực tiếp bài báo gốc trong tab mới.
-- Thêm đúng một nút `Tóm tắt` trên mỗi bài.
-- Nút này sao chép URL bài báo và mở TLDR This; người dùng chọn `Add URL`, dán link rồi tóm tắt.
-- Không tích hợp khóa API và không gửi khóa bí mật ra frontend.
-- Tách thao tác mở bài khỏi thao tác đổi trạng thái đã đọc để tránh bài đã đọc bị chuyển ngược thành chưa đọc.
+## Cập nhật sao chép link và tóm tắt nội bộ
+
+- Tiêu đề, hình và nút `Đọc bài gốc` tiếp tục mở website của báo.
+- Nút `Sao chép link` chép URL gốc vào clipboard.
+- Nút `Tóm tắt` mở cửa sổ trong ứng dụng, hiển thị bản tóm tắt khoảng 25–35% bài gốc.
+- Thuật toán ưu tiên số liệu, lập luận, quan điểm đối chiếu và ý nghĩa cuối bài; không thêm nhận xét cá nhân.
+- Nút `Đổi cách nối câu` tạo biến thể trình bày khác nhưng giữ các ý chính.
+- Phải deploy lại Edge Functions sau khi cập nhật source.

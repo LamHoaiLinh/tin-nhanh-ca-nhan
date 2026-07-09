@@ -25,6 +25,7 @@ Chạy workflow GitHub **Deploy Supabase Edge Functions** hoặc dùng CLI:
 supabase functions deploy validate-feed
 supabase functions deploy discover-feed
 supabase functions deploy scan-rss
+supabase functions deploy summarize-article
 ```
 
 Supabase Edge Function secret:
@@ -87,6 +88,7 @@ https://TEN-APP.onrender.com/**
 - Banner quét lần đầu xuất hiện khi vào ứng dụng.
 - Trang Trợ giúp mở được.
 - Workflow Scan RSS chạy xanh.
+- Nút Tóm tắt tạo được nội dung và nút Sao chép link hoạt động.
 
 ## B. Cập nhật repository hiện tại
 

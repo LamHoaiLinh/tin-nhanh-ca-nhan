@@ -88,3 +88,30 @@ Nếu bài mới có điểm đại diện cao hơn, cluster được chuyển s
 - Nguồn đăng lại bài cũ với ngày mới có thể qua bộ lọc thời gian.
 - RSS thiếu GUID/ngày làm chất lượng nhận dạng giảm.
 - Chọn đại diện lại chưa gói trong PostgreSQL transaction/RPC duy nhất.
+
+
+## Luồng tóm tắt bài báo
+
+```text
+Người dùng bấm Tóm tắt
+  → xác thực tài khoản và quyền sở hữu nguồn
+  → kiểm tra URL/SSRF ở mỗi lần chuyển hướng
+  → tải tối đa 5 MB, timeout 15 giây
+  → ưu tiên articleBody trong JSON-LD
+  → nếu thiếu, lấy các đoạn trong article/main/p
+  → loại quảng cáo, điều hướng, “xem thêm” và đoạn trùng
+  → tách câu tiếng Việt bằng Intl.Segmenter
+  → chấm điểm theo tần suất từ, tiêu đề, vị trí, số liệu, dẫn chứng, đối chiếu và phần kết
+  → chọn câu bằng ngưỡng đa dạng Jaccard
+  → sắp lại theo thứ tự bài gốc
+  → thêm câu chuyển ý trung tính theo quan hệ ngữ nghĩa
+  → trả bản tóm tắt khoảng 25–35%
+```
+
+Thuật toán là extractive: giữ nguyên phần lớn câu gốc để hạn chế bịa thêm ý và bảo toàn giọng điệu. Câu chuyển ý chỉ làm nhiệm vụ nối mạch; không tạo kết luận mới. Toàn văn chỉ được xử lý trong bộ nhớ Edge Function và không lưu vào database.
+
+## Giới hạn tóm tắt
+
+- Một số báo chặn bot, yêu cầu JavaScript hoặc trả trang quá lớn; khi đó hệ thống dùng mô tả RSS và hiển thị cảnh báo.
+- Tóm tắt extractive có thể kém tự nhiên hơn mô hình ngôn ngữ, nhưng chi phí bằng 0 và khả năng kiểm chứng cao hơn.
+- Các bài pháp luật, y tế, tài chính hoặc có số liệu quan trọng vẫn cần đối chiếu nguồn gốc.

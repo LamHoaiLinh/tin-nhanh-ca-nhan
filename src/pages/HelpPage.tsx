@@ -52,14 +52,15 @@ export function HelpPage() {
       </section>
 
       <section className="panel">
-        <h2>Đọc bài gốc và tóm tắt nhanh</h2>
+        <h2>Đọc bài gốc, sao chép link và tóm tắt</h2>
         <ul>
           <li><strong>Bấm vào tiêu đề hoặc hình bài báo:</strong> mở thẳng bài gốc trên website của báo trong tab mới.</li>
-          <li><strong>Nút Tóm tắt:</strong> tự sao chép link bài báo và mở TLDR This trong tab mới.</li>
-          <li>Tại TLDR This, chọn <strong>Add URL</strong>, dán liên kết vừa sao chép rồi bấm <strong>Summarize This</strong>.</li>
-          <li>Nếu trình duyệt chặn tab mới, hãy cho phép mở cửa sổ bật lên đối với website Tin Nhanh Cá Nhân rồi thử lại.</li>
+          <li><strong>Nút Sao chép link:</strong> lưu chính xác đường dẫn bài gốc vào clipboard để gửi cho người khác hoặc dùng trong công cụ riêng.</li>
+          <li><strong>Nút Tóm tắt:</strong> ứng dụng đọc nội dung công khai của bài báo và chọn lọc các ý quan trọng bằng thuật toán, không dùng AI trả phí.</li>
+          <li>Bản tóm tắt thường dài khoảng 25–35% bài gốc, giữ lại số liệu, lập luận, đối chiếu và góc nhìn nổi bật; nút <strong>Đổi cách nối câu</strong> tạo cách trình bày khác mà không đổi ý cốt lõi.</li>
+          <li>Nếu báo chặn đọc toàn văn, ứng dụng sẽ báo rõ và chỉ tóm tắt từ mô tả RSS khi dữ liệu đủ dùng.</li>
         </ul>
-        <p className="help-note">TLDR This là dịch vụ bên thứ ba. Bản tóm tắt chỉ dùng để đọc nhanh; với số liệu, pháp luật hoặc thông tin quan trọng, bạn nên kiểm tra lại bài báo gốc.</p>
+        <p className="help-note">Tóm tắt thuật toán giúp đọc nhanh nhưng không thay thế bài gốc. Với số liệu, pháp luật, y tế, tài chính hoặc quyết định quan trọng, bạn nên mở nguồn để kiểm tra đầy đủ ngữ cảnh.</p>
       </section>
 
       <section className="panel">

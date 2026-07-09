@@ -27,6 +27,13 @@ export interface ArticleFilters {
   search: string; sort: 'relevance' | 'newest'; state: 'all' | 'unread' | 'saved'; category: string; sourceId: string;
   minScore: number; fromDate: string; toDate: string; page: number; pageSize: number;
 }
+
+export interface ArticleSummary {
+  articleId: string; title: string; sourceName: string; originalUrl: string;
+  extractionMethod: 'json-ld' | 'article' | 'main' | 'paragraphs' | 'rss-description';
+  warning: string | null; paragraphs: string[]; originalWordCount: number; summaryWordCount: number;
+  compressionRatio: number; selectedSentenceCount: number;
+}
 export interface FeedValidationResult {
   valid: boolean; feedName: string; websiteUrl: string | null; itemCount: number; newestDate: string | null; hasImage: boolean; format: 'RSS 2.0' | 'Atom' | 'RDF' | 'Unknown';
 }
