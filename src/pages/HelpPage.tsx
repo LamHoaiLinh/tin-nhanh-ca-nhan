@@ -52,6 +52,17 @@ export function HelpPage() {
       </section>
 
       <section className="panel">
+        <h2>Đọc bài gốc và tóm tắt nhanh</h2>
+        <ul>
+          <li><strong>Bấm vào tiêu đề hoặc hình bài báo:</strong> mở thẳng bài gốc trên website của báo trong tab mới.</li>
+          <li><strong>Nút Tóm tắt:</strong> tự sao chép link bài báo và mở TLDR This trong tab mới.</li>
+          <li>Tại TLDR This, chọn <strong>Add URL</strong>, dán liên kết vừa sao chép rồi bấm <strong>Summarize This</strong>.</li>
+          <li>Nếu trình duyệt chặn tab mới, hãy cho phép mở cửa sổ bật lên đối với website Tin Nhanh Cá Nhân rồi thử lại.</li>
+        </ul>
+        <p className="help-note">TLDR This là dịch vụ bên thứ ba. Bản tóm tắt chỉ dùng để đọc nhanh; với số liệu, pháp luật hoặc thông tin quan trọng, bạn nên kiểm tra lại bài báo gốc.</p>
+      </section>
+
+      <section className="panel">
         <h2>Điểm phù hợp được tính như thế nào?</h2>
         <p>Điểm tổng hợp từ trọng số chuyên mục, từ khóa, độ ưu tiên của nguồn, độ mới và chất lượng dữ liệu. Di chuột lên nhãn điểm của mỗi bài để xem chi tiết từng thành phần.</p>
         <ul>

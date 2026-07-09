@@ -41,3 +41,10 @@ Mã Edge Functions không thay đổi về giao thức. Có thể chạy lại w
 - Trang **Nguồn tin** có đủ 9 nguồn mặc định đang bật.
 - Khi vào giao diện lần đầu, banner báo đang chuẩn bị nguồn và quét tin.
 - Render không còn truy cập registry npm nội bộ; Node được ghim bằng `.node-version`.
+
+## Cập nhật mở bài gốc và tóm tắt bằng TLDR This
+- Khi bấm tiêu đề hoặc hình của bài, ứng dụng mở trực tiếp bài báo gốc trong tab mới.
+- Thêm đúng một nút `Tóm tắt` trên mỗi bài.
+- Nút này sao chép URL bài báo và mở TLDR This; người dùng chọn `Add URL`, dán link rồi tóm tắt.
+- Không tích hợp khóa API và không gửi khóa bí mật ra frontend.
+- Tách thao tác mở bài khỏi thao tác đổi trạng thái đã đọc để tránh bài đã đọc bị chuyển ngược thành chưa đọc.

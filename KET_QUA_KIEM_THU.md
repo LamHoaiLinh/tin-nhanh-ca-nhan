@@ -22,6 +22,8 @@ npm run build
 - `package-lock.json` sử dụng `https://registry.npmjs.org/`.
 - Không còn câu giao diện “Tin dành cho anh”; trang chính dùng “Tin dành cho bạn”.
 - Bundle production tạo thành công với trang Trợ giúp, tooltip và bootstrap nguồn mặc định.
+- Tiêu đề, hình và nút Đọc bài gốc đều mở URL gốc của báo trong tab mới.
+- Nút Tóm tắt sao chép URL bài báo và mở TLDR This; không thêm API key vào frontend.
 
 ## Phạm vi unit test
 

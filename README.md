@@ -113,3 +113,6 @@ Kết quả bản đóng gói cuối: 8 test files, 35 test cases đạt; TypeSc
 - Không lưu toàn văn bài báo.
 - Một số báo có thể đổi URL, chặn bot hoặc giới hạn tần suất.
 - Dữ liệu RSS và hình ảnh thuộc website nguồn.
+
+### Tóm tắt bài báo
+Mỗi thẻ tin có một nút `Tóm tắt`. Nút này sao chép URL bài gốc và mở TLDR This trong tab mới. Tiêu đề, hình và nút `Đọc bài gốc` đều mở trực tiếp website của báo.

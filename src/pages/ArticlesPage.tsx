@@ -95,7 +95,8 @@ export function ArticlesPage() {
               key={article.id}
               article={article}
               onSave={() => void mutateState(article.id, { is_saved: !article.is_saved })}
-              onRead={() => void mutateState(article.id, { is_read: !article.is_read, opened_at: new Date().toISOString() })}
+              onOpen={() => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
+              onToggleRead={() => void mutateState(article.id, { is_read: !article.is_read, opened_at: article.is_read ? null : new Date().toISOString() })}
               onHide={() => void mutateState(article.id, { is_hidden: true })}
               onBlockSource={() => {
                 if (confirm(`Tắt nguồn ${article.source_name}?`)) {
