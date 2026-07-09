@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArticleFeedItem, ArticleSummary, InsightQuestion } from '../types/domain';
 import { summarizeArticle } from '../services/functions';
+import { buildClientInsightQuestions } from '../algorithms/insightQuestions';
 
 interface Props {
   articles: ArticleFeedItem[];
@@ -72,6 +73,11 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
   const hasNext = currentIndex !== null && currentIndex < articles.length - 1;
   const positionText = currentIndex === null ? '' : `${currentIndex + 1} / ${articles.length}`;
   const showHeroImage = Boolean(article?.image_url && !failedImages[article.id]);
+  const displayQuestions = useMemo(() => {
+    if (!result) return [];
+    if (Array.isArray(result.insightQuestions) && result.insightQuestions.length > 0) return result.insightQuestions;
+    return buildClientInsightQuestions(result.title || article?.title || '', result.paragraphs, currentIndex ?? Date.now());
+  }, [result, article?.title, currentIndex]);
 
   const statusText = useMemo(() => {
     if (!result?.warning) return '';
@@ -203,7 +209,7 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
               {result.paragraphs.map((paragraph, index) => (
                 <p key={`${article.id}-${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
               ))}
-              {result.insightQuestions?.length > 0 && (
+              {displayQuestions.length > 0 && (
                 <aside className="summary-insight-box" aria-labelledby={`insight-title-${article.id}`}>
                   <div className="summary-insight-heading">
                     <span className="summary-insight-mark" aria-hidden="true">?</span>
@@ -214,7 +220,7 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
                     </div>
                   </div>
                   <ol className="summary-insight-list">
-                    {result.insightQuestions.map((item, index) => (
+                    {displayQuestions.map((item, index) => (
                       <li key={`${item.kind}-${index}-${item.question.slice(0, 28)}`}>
                         <span className={`summary-insight-kind kind-${item.kind}`}>{item.label}</span>
                         <strong>{item.question}</strong>

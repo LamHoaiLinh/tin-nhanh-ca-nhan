@@ -1,5 +1,6 @@
 import { supabase, supabasePublishableKey, supabaseUrl } from './supabase';
 import type { ArticleSummary, FeedValidationResult } from '../types/domain';
+import { ensureInsightQuestions } from '../algorithms/insightQuestions';
 
 async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke(name, { body });
@@ -56,7 +57,7 @@ async function summarizeDirect(articleId: string, seed: number): Promise<Article
       }
       if (!payload) throw new Error('Edge Function không trả về dữ liệu hợp lệ.');
       if (payload.error) throw new Error(payload.error);
-      return payload;
+      return ensureInsightQuestions(payload, seed);
     } catch (error) {
       lastError = error;
       if (error instanceof DOMException && error.name === 'AbortError') lastError = new Error('Chức năng tóm tắt phản hồi quá lâu.');

@@ -68,3 +68,10 @@ npx -y deno@2.5.6 check --config supabase/functions/summarize-article/deno.json 
 - Vite production build: đạt.
 - Kiểm thử mới xác nhận câu hỏi được phân nhóm, không trùng loại, có dấu hỏi, bài ngắn chỉ tạo tối đa hai câu và nội dung quá ngắn không tạo câu hỏi.
 - Deno check trong môi trường đóng gói không hoàn tất do lỗi DNS tạm thời khi tải package; phần TypeScript dùng chung đã được Vitest biên dịch và workflow Supabase cần chạy lại khi triển khai.
+
+## Bản sửa hiển thị câu hỏi gợi mở
+- TypeScript typecheck: đạt.
+- Vitest: 12/12 file, 53/53 test đạt.
+- Production build: đạt.
+- Đã kiểm thử payload Edge Function cũ không có `insightQuestions`: frontend tự bổ sung câu hỏi và vẫn hiển thị khung cuối bài.
+- Khi Edge Function mới có câu hỏi từ toàn văn, frontend giữ nguyên kết quả phía server.

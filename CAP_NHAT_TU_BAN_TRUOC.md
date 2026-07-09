@@ -110,3 +110,8 @@ Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `su
 - Cuối cửa sổ tóm tắt có khung `Đọc sâu hơn – Câu hỏi gợi mở`, viền nổi bật, đánh số và phân loại từng câu hỏi.
 - Không lưu câu hỏi hoặc toàn văn lâu dài vào database; kết quả chỉ được trả về cho phiên đọc hiện tại.
 - Sau khi cập nhật GitHub phải chạy lại workflow `Deploy Supabase Edge Functions`; Render tự triển khai phần giao diện.
+
+## Sửa lỗi câu hỏi gợi mở không xuất hiện
+- Frontend tự phát hiện payload từ Edge Function cũ chưa có `insightQuestions`.
+- Tự tạo 2–4 câu hỏi từ bản tóm tắt đang hiển thị để khung cuối bài luôn hoạt động.
+- Khi Edge Function mới trả câu hỏi từ toàn văn, frontend tiếp tục ưu tiên kết quả đầy đủ đó.

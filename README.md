@@ -149,3 +149,7 @@ Workflow `Cleanup Old Articles` chạy hằng ngày, xóa bài cũ chưa lưu, x
 - Trang Tin tức tự đọc lựa chọn mặc định từ `user_settings`, đồng thời Bộ lọc cho phép đổi tạm thời.
 - Trang Sở thích có nút `Các từ khóa gợi ý`. Danh sách được tổ chức theo lĩnh vực bao quát; mỗi lần chỉ mở một lĩnh vực.
 - Bấm một từ khóa chi tiết sẽ thêm quy tắc `Tăng điểm`, phạm vi `Tiêu đề + mô tả`, trọng số trung bình `3/10`; từ khóa đã có được nhận diện và không tạo bản ghi trùng.
+
+
+## Câu hỏi gợi mở
+Cuối bản tóm tắt có khung “Đọc sâu hơn”. Edge Function ưu tiên tạo câu hỏi từ toàn văn; frontend có lớp tự phục hồi để tạo câu hỏi từ bản tóm tắt khi máy chủ vẫn đang chạy phiên bản cũ hoặc payload chưa có trường `insightQuestions`.
