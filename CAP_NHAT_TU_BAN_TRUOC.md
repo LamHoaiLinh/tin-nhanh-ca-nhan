@@ -52,7 +52,9 @@ Sau khi upload GitHub, bắt buộc chạy lại workflow **Deploy Supabase Edge
 
 - Tiêu đề, hình và nút `Đọc bài gốc` tiếp tục mở website của báo.
 - Nút `Sao chép link` chép URL gốc vào clipboard.
-- Nút `Tóm tắt` mở cửa sổ trong ứng dụng, hiển thị bản tóm tắt khoảng 25–35% bài gốc.
-- Thuật toán ưu tiên số liệu, lập luận, quan điểm đối chiếu và ý nghĩa cuối bài; không thêm nhận xét cá nhân.
-- Nút `Đổi cách nối câu` tạo biến thể trình bày khác nhưng giữ các ý chính.
-- Phải deploy lại Edge Functions sau khi cập nhật source.
+- Nút `Tóm tắt` mở chế độ đọc liên tục ngay trong ứng dụng.
+- Độ dài khoảng 25–35%, cách nối câu và bố cục được xử lý hoàn toàn tự động.
+- Người dùng chỉ chọn cỡ chữ, cuộn đọc, chuyển bài trước hoặc bài tiếp theo.
+- Kết quả đã tóm tắt được giữ tạm trong bộ nhớ phiên để quay lại bài trước nhanh hơn.
+- Khi Edge Function hoặc website nguồn tạm lỗi, giao diện tự dùng mô tả RSS thay vì hiện lỗi kỹ thuật.
+- Workflow deploy nay triển khai riêng từng Edge Function và kiểm tra chắc chắn có `summarize-article`.

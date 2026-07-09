@@ -1,106 +1,183 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArticleFeedItem, ArticleSummary } from '../types/domain';
 import { summarizeArticle } from '../services/functions';
-import { copyText } from '../utils/clipboard';
-import { errorMessage } from '../utils/error';
 
 interface Props {
-  article: ArticleFeedItem;
-  open: boolean;
+  articles: ArticleFeedItem[];
+  currentIndex: number | null;
   onClose: () => void;
-  onMarkRead: () => void;
+  onNavigate: (index: number) => void;
+  onMarkRead: (article: ArticleFeedItem) => void;
 }
 
-export function ArticleSummaryModal({ article, open, onClose, onMarkRead }: Props) {
-  const [result, setResult] = useState<ArticleSummary | null>(null);
+type FontScale = 'small' | 'medium' | 'large';
+
+const FONT_LABELS: Record<FontScale, string> = {
+  small: 'Chữ nhỏ',
+  medium: 'Chữ vừa',
+  large: 'Chữ lớn',
+};
+
+function fallbackSummary(article: ArticleFeedItem, reason?: string): ArticleSummary | null {
+  const description = article.description?.replace(/\s+/g, ' ').trim();
+  if (!description || description.length < 35) return null;
+  const wordCount = description.split(/\s+/).filter(Boolean).length;
+  return {
+    articleId: article.id,
+    title: article.title,
+    sourceName: article.source_name,
+    originalUrl: article.original_url,
+    extractionMethod: 'rss-description',
+    warning: reason ? 'Đang hiển thị bản đọc nhanh từ mô tả RSS vì chưa lấy được toàn văn bài gốc.' : null,
+    paragraphs: [description],
+    originalWordCount: wordCount,
+    summaryWordCount: wordCount,
+    compressionRatio: 1,
+    selectedSentenceCount: Math.max(1, description.split(/(?<=[.!?…])\s+/u).length),
+  };
+}
+
+function readInitialFont(): FontScale {
+  const stored = window.localStorage.getItem('tin-nhanh-summary-font');
+  return stored === 'small' || stored === 'large' ? stored : 'medium';
+}
+
+export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigate, onMarkRead }: Props) {
+  const article = currentIndex === null ? null : articles[currentIndex] ?? null;
+  const [cache, setCache] = useState<Record<string, ArticleSummary>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [copyNotice, setCopyNotice] = useState('');
+  const [technicalError, setTechnicalError] = useState('');
+  const [fontScale, setFontScale] = useState<FontScale>(readInitialFont);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const summaryText = useMemo(() => result?.paragraphs.join('\n\n') ?? '', [result]);
+  const result = article ? cache[article.id] ?? null : null;
+  const hasPrevious = currentIndex !== null && currentIndex > 0;
+  const hasNext = currentIndex !== null && currentIndex < articles.length - 1;
+  const positionText = currentIndex === null ? '' : `${currentIndex + 1} / ${articles.length}`;
 
-  async function loadSummary(seed = Date.now()) {
-    setLoading(true);
-    setError('');
-    setCopyNotice('');
-    try {
-      const data = await summarizeArticle(article.id, seed);
-      setResult(data);
-      onMarkRead();
-    } catch (loadError) {
-      setError(errorMessage(loadError));
-    } finally {
-      setLoading(false);
+  const statusText = useMemo(() => {
+    if (!result?.warning) return '';
+    return result.extractionMethod === 'rss-description'
+      ? 'Bản đọc nhanh từ mô tả RSS'
+      : 'Bản tóm tắt có giới hạn dữ liệu nguồn';
+  }, [result]);
+
+  useEffect(() => {
+    window.localStorage.setItem('tin-nhanh-summary-font', fontScale);
+  }, [fontScale]);
+
+  useEffect(() => {
+    if (!article) return;
+    contentRef.current?.scrollTo({ top: 0 });
+    onMarkRead(article);
+
+    if (cache[article.id]) {
+      setTechnicalError('');
+      return;
     }
-  }
+
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setTechnicalError('');
+      let lastError: unknown = null;
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const data = await summarizeArticle(article.id, Date.now() + attempt * 7919);
+          if (!cancelled) setCache((current) => ({ ...current, [article.id]: data }));
+          if (!cancelled) setLoading(false);
+          return;
+        } catch (error) {
+          lastError = error;
+          if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 900));
+        }
+      }
+
+      if (cancelled) return;
+      const message = lastError instanceof Error ? lastError.message : 'Không thể kết nối chức năng tóm tắt.';
+      const fallback = fallbackSummary(article, message);
+      if (fallback) setCache((current) => ({ ...current, [article.id]: fallback }));
+      else setTechnicalError('Chưa lấy được nội dung đủ dài để tạo bản đọc nhanh.');
+      setLoading(false);
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [article?.id]);
 
   useEffect(() => {
-    if (!open) return;
-    setResult(null);
-    void loadSummary();
-  }, [open, article.id]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    if (!article) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key === 'ArrowLeft' && hasPrevious && currentIndex !== null) onNavigate(currentIndex - 1);
+      if (event.key === 'ArrowRight' && hasNext && currentIndex !== null) onNavigate(currentIndex + 1);
+    };
     document.addEventListener('keydown', onKeyDown);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [article?.id, currentIndex, hasPrevious, hasNext, onClose, onNavigate]);
 
-  if (!open) return null;
-  const percent = result ? Math.round(result.compressionRatio * 100) : 0;
-
-  async function copySummary() {
-    if (!summaryText) return;
-    try {
-      await copyText(`${article.title}\n\n${summaryText}\n\nNguồn: ${article.original_url}`);
-      setCopyNotice('Đã sao chép bản tóm tắt.');
-    } catch (copyError) {
-      setCopyNotice(errorMessage(copyError));
-    }
-  }
+  if (!article || currentIndex === null) return null;
 
   return (
     <div className="summary-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="summary-modal" role="dialog" aria-modal="true" aria-labelledby={`summary-title-${article.id}`}>
+      <section className="summary-modal summary-reader" role="dialog" aria-modal="true" aria-labelledby={`summary-title-${article.id}`}>
         <header className="summary-header">
-          <div>
-            <span className="summary-kicker">Tóm tắt bằng thuật toán</span>
+          <div className="summary-heading-copy">
+            <span className="summary-kicker">Bản đọc nhanh</span>
             <h2 id={`summary-title-${article.id}`}>{article.title}</h2>
             <p>{article.source_name}</p>
           </div>
-          <button className="icon-button" title="Đóng cửa sổ tóm tắt" aria-label="Đóng" onClick={onClose}>×</button>
+          <div className="summary-header-tools" aria-label="Tùy chọn đọc">
+            <div className="summary-font-controls" role="group" aria-label="Cỡ chữ">
+              {(['small', 'medium', 'large'] as FontScale[]).map((size) => (
+                <button
+                  key={size}
+                  className={fontScale === size ? 'active' : ''}
+                  title={FONT_LABELS[size]}
+                  aria-label={FONT_LABELS[size]}
+                  aria-pressed={fontScale === size}
+                  onClick={() => setFontScale(size)}
+                >
+                  {size === 'small' ? 'A−' : size === 'large' ? 'A+' : 'A'}
+                </button>
+              ))}
+            </div>
+            <button className="icon-button" title="Đóng cửa sổ tóm tắt" aria-label="Đóng" onClick={onClose}>×</button>
+          </div>
         </header>
 
-        {loading ? (
-          <div className="summary-loading"><div className="spinner"/><strong>Đang đọc và chọn lọc ý quan trọng…</strong><span>Thường mất vài giây, tùy tốc độ website nguồn.</span></div>
-        ) : error ? (
-          <div className="summary-error"><h3>Chưa thể tóm tắt bài này</h3><p>{error}</p><div className="summary-actions"><button className="button primary" onClick={() => void loadSummary()}>Thử lại</button><button onClick={() => void copyText(article.original_url).then(() => setCopyNotice('Đã sao chép link bài gốc.')).catch((copyError) => setCopyNotice(errorMessage(copyError)))}>Sao chép link</button></div></div>
-        ) : result ? (
-          <>
-            <div className="summary-metrics" aria-label="Thông tin bản tóm tắt">
-              <span><strong>{percent}%</strong> độ dài bài gốc</span>
-              <span><strong>{result.summaryWordCount}</strong> từ tóm tắt</span>
-              <span><strong>{result.selectedSentenceCount}</strong> ý chính</span>
+        <div ref={contentRef} className={`summary-reader-content font-${fontScale}`}>
+          {loading ? (
+            <div className="summary-loading">
+              <div className="spinner" />
+              <strong>Đang đọc và tóm tắt tự động…</strong>
+              <span>Hệ thống đang lấy toàn văn, chọn ý chính và nối lại thành các đoạn dễ đọc.</span>
             </div>
-            {result.warning && <div className="summary-warning">{result.warning}</div>}
-            <div className="summary-content">
-              {result.paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>)}
+          ) : result ? (
+            <article className="summary-content" aria-live="polite">
+              {statusText && <div className="summary-source-status">{statusText}</div>}
+              {result.paragraphs.map((paragraph, index) => (
+                <p key={`${article.id}-${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
+              ))}
+            </article>
+          ) : (
+            <div className="summary-error">
+              <h3>Chưa thể tạo bản đọc nhanh</h3>
+              <p>{technicalError}</p>
             </div>
-            <p className="summary-note">Bản tóm tắt giữ nguyên câu chữ và góc nhìn chủ đạo của nguồn, nhưng vẫn có thể bỏ sót chi tiết. Hãy đối chiếu bài gốc khi dùng số liệu, nội dung pháp luật hoặc quyết định quan trọng.</p>
-            <div className="summary-actions">
-              <button className="button primary" onClick={() => void copySummary()}>Sao chép tóm tắt</button>
-              <button title="Tạo lại cùng nội dung cốt lõi nhưng thay đổi cách nối câu" onClick={() => void loadSummary(Date.now() + Math.floor(Math.random() * 100000))}>Đổi cách nối câu</button>
-              <button onClick={() => void copyText(article.original_url).then(() => setCopyNotice('Đã sao chép link bài gốc.')).catch((copyError) => setCopyNotice(errorMessage(copyError)))}>Sao chép link</button>
-              <a className="button" href={article.original_url} target="_blank" rel="noopener noreferrer" onClick={onMarkRead}>Mở bài gốc</a>
-            </div>
-          </>
-        ) : null}
-        {copyNotice && <div className="summary-copy-notice" role="status">{copyNotice}</div>}
+          )}
+        </div>
+
+        <footer className="summary-reader-nav">
+          <button disabled={!hasPrevious || loading} onClick={() => hasPrevious && onNavigate(currentIndex - 1)} title="Tóm tắt bài trước (phím mũi tên trái)">← Bài trước</button>
+          <strong>{positionText}</strong>
+          <button className="button primary" disabled={!hasNext || loading} onClick={() => hasNext && onNavigate(currentIndex + 1)} title="Tóm tắt bài tiếp theo (phím mũi tên phải)">Bài tiếp →</button>
+        </footer>
       </section>
     </div>
   );

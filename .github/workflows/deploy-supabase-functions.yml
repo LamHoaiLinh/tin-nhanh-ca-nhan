@@ -31,5 +31,12 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing SUPABASE_ACCESS_TOKEN" && exit 1)
           test -n "$SUPABASE_PROJECT_ID" || (echo "Missing SUPABASE_PROJECT_ID" && exit 1)
 
-      - name: Deploy all Edge Functions
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+      - name: Deploy core Edge Functions
+        run: |
+          supabase functions deploy validate-feed --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy discover-feed --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy scan-rss --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy summarize-article --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Confirm summarize function deployment
+        run: supabase functions list --project-ref "$SUPABASE_PROJECT_ID" | grep -q "summarize-article"

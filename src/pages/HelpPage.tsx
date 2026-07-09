@@ -57,8 +57,8 @@ export function HelpPage() {
           <li><strong>Bấm vào tiêu đề hoặc hình bài báo:</strong> mở thẳng bài gốc trên website của báo trong tab mới.</li>
           <li><strong>Nút Sao chép link:</strong> lưu chính xác đường dẫn bài gốc vào clipboard để gửi cho người khác hoặc dùng trong công cụ riêng.</li>
           <li><strong>Nút Tóm tắt:</strong> ứng dụng đọc nội dung công khai của bài báo và chọn lọc các ý quan trọng bằng thuật toán, không dùng AI trả phí.</li>
-          <li>Bản tóm tắt thường dài khoảng 25–35% bài gốc, giữ lại số liệu, lập luận, đối chiếu và góc nhìn nổi bật; nút <strong>Đổi cách nối câu</strong> tạo cách trình bày khác mà không đổi ý cốt lõi.</li>
-          <li>Nếu báo chặn đọc toàn văn, ứng dụng sẽ báo rõ và chỉ tóm tắt từ mô tả RSS khi dữ liệu đủ dùng.</li>
+          <li>Độ dài, cách nối câu và bố cục được xử lý tự động; người dùng chỉ cần đọc, thay đổi cỡ chữ hoặc chuyển sang bài trước và bài tiếp theo.</li>
+          <li>Nếu báo chặn đọc toàn văn, ứng dụng tự chuyển sang bản đọc nhanh từ mô tả RSS để không làm gián đoạn luồng đọc.</li>
         </ul>
         <p className="help-note">Tóm tắt thuật toán giúp đọc nhanh nhưng không thay thế bài gốc. Với số liệu, pháp luật, y tế, tài chính hoặc quyết định quan trọng, bạn nên mở nguồn để kiểm tra đầy đủ ngữ cảnh.</p>
       </section>

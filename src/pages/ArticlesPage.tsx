@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArticleCard } from '../components/ArticleCard';
+import { ArticleSummaryModal } from '../components/ArticleSummaryModal';
 import { BottomNav } from '../components/BottomNav';
 import { FilterSheet } from '../components/FilterSheet';
 import { HelpTip } from '../components/HelpTip';
@@ -23,6 +24,7 @@ export function ArticlesPage() {
   const [filters, setFilters] = useState(INITIAL);
   const [filterOpen, setFilterOpen] = useState(false);
   const [notice, setNotice] = useState('');
+  const [summaryIndex, setSummaryIndex] = useState<number | null>(null);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
   const queryClient = useQueryClient();
   const queryFilters = { ...filters, search: debouncedSearch };
@@ -90,12 +92,13 @@ export function ArticlesPage() {
         <div className="empty-state"><h2>Chưa có bài phù hợp</h2><p>Hãy thêm nguồn RSS, quét tin hoặc giảm điều kiện lọc.</p></div>
       ) : (
         <div className="article-grid">
-          {articles.data.items.map((article) => (
+          {articles.data.items.map((article, index) => (
             <ArticleCard
               key={article.id}
               article={article}
               onSave={() => void mutateState(article.id, { is_saved: !article.is_saved })}
               onOpen={() => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
+              onSummarize={() => setSummaryIndex(index)}
               onToggleRead={() => void mutateState(article.id, { is_read: !article.is_read, opened_at: article.is_read ? null : new Date().toISOString() })}
               onHide={() => void mutateState(article.id, { is_hidden: true })}
               onBlockSource={() => {
@@ -120,6 +123,15 @@ export function ArticlesPage() {
           ))}
         </div>
       )}
+
+
+      <ArticleSummaryModal
+        articles={articles.data?.items ?? []}
+        currentIndex={summaryIndex}
+        onClose={() => setSummaryIndex(null)}
+        onNavigate={setSummaryIndex}
+        onMarkRead={(article) => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
+      />
 
       <FilterSheet open={filterOpen} filters={filters} sources={sources.data ?? []} categories={categories} onChange={change} onClose={() => setFilterOpen(false)} />
       <BottomNav page={filters.page} totalPages={totalPages} onPrevious={goPrevious} onNext={goNext} onTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })} loading={articles.isFetching} />

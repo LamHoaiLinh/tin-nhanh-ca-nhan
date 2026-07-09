@@ -18,7 +18,7 @@ async function fetchArticleHtml(input: string, redirects = 0): Promise<{ body: s
   if (redirects > 4) throw new Error('Bài báo chuyển hướng quá nhiều lần.');
   const url = await assertSafeUrl(input);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15_000);
+  const timer = setTimeout(() => controller.abort(), 10_000);
   let response: Response;
   try {
     response = await fetch(url, {
@@ -31,7 +31,7 @@ async function fetchArticleHtml(input: string, redirects = 0): Promise<{ body: s
       },
     });
   } catch (error) {
-    if ((error as Error).name === 'AbortError') throw new Error('Bài báo phản hồi quá 15 giây.');
+    if ((error as Error).name === 'AbortError') throw new Error('Bài báo phản hồi quá 10 giây.');
     throw new Error(`Không thể tải bài báo: ${(error as Error).message}`);
   } finally {
     clearTimeout(timer);
@@ -67,7 +67,7 @@ async function fetchArticleHtml(input: string, redirects = 0): Promise<{ body: s
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   let body: string;
   try { body = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-  catch { body = new TextDecoder('windows-1252').decode(bytes); }
+  catch { body = new TextDecoder().decode(bytes); }
   return { body, finalUrl: response.url || url.toString() };
 }
 
