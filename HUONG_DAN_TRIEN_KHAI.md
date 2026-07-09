@@ -13,9 +13,11 @@ Trong SQL Editor, chạy lần lượt:
 ```text
 supabase/migrations/202607080001_initial.sql
 supabase/migrations/202607090001_verified_default_sources.sql
+supabase/migrations/202607090002_storage_cleanup_and_newest.sql
+supabase/migrations/202607090003_sort_options.sql
 ```
 
-Migration thứ hai tạo danh mục 9 nguồn đã xác nhận, thêm nguồn cho tài khoản hiện có và cập nhật trigger cho tài khoản mới.
+Migration thứ hai tạo danh mục 9 nguồn đã xác nhận; migration thứ ba bổ sung quản lý dung lượng; migration thứ tư mở rộng tùy chọn sắp xếp.
 
 ### 3. Edge Functions
 
@@ -112,3 +114,11 @@ Sau khi upload phiên bản này, chạy thêm migration:
 Migration bổ sung thời gian giữ `scan_logs`, giới hạn database dùng cho cảnh báo, hàm đọc dung lượng PostgreSQL và đặt thứ tự tin mặc định là mới nhất.
 
 Sau đó vào GitHub Actions chạy thủ công `Cleanup Old Articles` một lần để xác nhận bài cũ, nhật ký quét và cảnh báo dung lượng hoạt động. Workflow cần `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY`.
+
+
+## Cập nhật sắp xếp và từ khóa gợi ý
+Sau khi upload phiên bản này, chạy thêm migration:
+
+`supabase/migrations/202607090003_sort_options.sql`
+
+Migration mở rộng ràng buộc `default_sort` để hỗ trợ `newest`, `relevance` và `oldest`. Sau khi Render triển khai xong, chọn thứ tự mặc định trong Cài đặt. Từ khóa gợi ý không cần migration riêng vì chúng được thêm vào bảng `keyword_rules` khi người dùng bấm chọn.

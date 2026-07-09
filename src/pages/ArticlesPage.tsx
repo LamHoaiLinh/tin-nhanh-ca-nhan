@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArticleCard } from '../components/ArticleCard';
@@ -14,7 +14,8 @@ import { listSources } from '../services/sources';
 import { scanSource } from '../services/functions';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
-import type { ArticleFilters } from '../types/domain';
+import type { ArticleFilters, UserSettings } from '../types/domain';
+import { ARTICLE_SORT_OPTIONS } from '../config/articleSort';
 import { errorMessage } from '../utils/error';
 
 const INITIAL: ArticleFilters = { search: '', sort: 'newest', state: 'all', category: '', sourceId: '', minScore: 0, fromDate: '', toDate: '', page: 1, pageSize: 20 };
@@ -25,14 +26,36 @@ export function ArticlesPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [summaryIndex, setSummaryIndex] = useState<number | null>(null);
+  const [settingsApplied, setSettingsApplied] = useState(false);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
   const queryClient = useQueryClient();
   const queryFilters = { ...filters, search: debouncedSearch };
   const articles = useQuery({ queryKey: ['articles', queryFilters], queryFn: () => fetchArticles(queryFilters), placeholderData: (previous) => previous });
   const sources = useQuery({ queryKey: ['sources'], queryFn: listSources });
+  const settings = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_settings').select('*').single();
+      if (error) throw error;
+      return data as UserSettings;
+    },
+  });
   const totalPages = Math.max(1, Math.ceil((articles.data?.count ?? 0) / filters.pageSize));
   const categories = useMemo(() => [...new Set((sources.data ?? []).map((source) => source.category).filter(Boolean))].sort(), [sources.data]);
+  const activeSortLabel = ARTICLE_SORT_OPTIONS.find((option) => option.value === filters.sort)?.label ?? 'Mới nhất trước';
   const change = (patch: Partial<ArticleFilters>) => setFilters((current) => ({ ...current, ...patch }));
+
+  useEffect(() => {
+    if (!settingsApplied && settings.data) {
+      setFilters((current) => ({
+        ...current,
+        sort: settings.data.default_sort,
+        pageSize: settings.data.page_size,
+        page: 1,
+      }));
+      setSettingsApplied(true);
+    }
+  }, [settings.data, settingsApplied]);
 
   const mutateState = async (id: string, patch: Parameters<typeof setArticleState>[1]) => {
     try {
@@ -63,8 +86,8 @@ export function ArticlesPage() {
     <>
       <section className="page-heading">
         <div>
-          <h1>Tin dành cho bạn <HelpTip text="Danh sách đã được lọc theo sở thích và luôn xếp bài đăng mới nhất lên trước." /></h1>
-          <p>{articles.data?.count ?? 0} bài phù hợp với bộ lọc hiện tại</p>
+          <h1>Tin dành cho bạn <HelpTip text="Danh sách đã được lọc theo sở thích. Thứ tự mặc định lấy từ Cài đặt và có thể đổi tạm thời trong Bộ lọc." /></h1>
+          <p>{articles.data?.count ?? 0} bài phù hợp • Đang xếp: {activeSortLabel}</p>
         </div>
         <div className="heading-actions">
           <button title="Lấy bài mới từ tất cả nguồn RSS đang bật" onClick={() => void scanAll()}>Quét ngay</button>
@@ -129,7 +152,7 @@ export function ArticlesPage() {
         onMarkRead={(article) => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
       />
 
-      <FilterSheet open={filterOpen} filters={filters} sources={sources.data ?? []} categories={categories} onChange={change} onClose={() => setFilterOpen(false)} />
+      <FilterSheet open={filterOpen} filters={filters} sources={sources.data ?? []} categories={categories} onChange={change} onClose={() => setFilterOpen(false)} defaultSort={settings.data?.default_sort ?? 'newest'} />
       <BottomNav page={filters.page} totalPages={totalPages} onPrevious={goPrevious} onNext={goNext} onTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })} loading={articles.isFetching} />
     </>
   );

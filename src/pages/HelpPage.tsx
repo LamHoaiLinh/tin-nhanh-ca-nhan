@@ -49,6 +49,7 @@ export function HelpPage() {
           </article>
         </div>
         <p><strong>Gợi ý thực tế:</strong> bắt đầu với 5–10 từ khóa tăng điểm, trọng số 3–6. Theo dõi vài ngày rồi mới tăng hoặc giảm mạnh.</p>
+        <p><strong>Các từ khóa gợi ý:</strong> bấm nút này để mở các lĩnh vực bao quát. Mỗi lần chỉ một lĩnh vực được mở; chọn từ khóa chi tiết sẽ thêm quy tắc Tăng điểm ở mức trung bình 3/10.</p>
       </section>
 
       <section className="panel">
@@ -84,6 +85,16 @@ export function HelpPage() {
           <li>Nếu không có bài mới, kiểm tra nguồn đang bật, URL RSS còn hoạt động và bộ lọc điểm tối thiểu không đặt quá cao.</li>
           <li>Nếu tin không đúng sở thích, điều chỉnh từ khóa và trọng số chuyên mục thay vì xóa toàn bộ nguồn.</li>
         </ul>
+      </section>
+
+      <section className="panel">
+        <h2>Thứ tự hiển thị</h2>
+        <ul>
+          <li><strong>Mới nhất trước:</strong> mặc định, phù hợp để theo dõi tin hằng ngày.</li>
+          <li><strong>Phù hợp nhất:</strong> ưu tiên điểm sở thích, sau đó mới xét thời gian.</li>
+          <li><strong>Cũ nhất trước:</strong> hữu ích khi muốn đọc tuần tự từ bài cũ.</li>
+        </ul>
+        <p>Chọn mặc định tại Cài đặt; có thể đổi tạm thời trong Bộ lọc ở trang Tin tức.</p>
       </section>
 
       <section className="panel">

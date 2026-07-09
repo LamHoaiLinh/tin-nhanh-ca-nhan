@@ -19,12 +19,14 @@ export interface KeywordRule {
   id: string; user_id: string; keyword: string; rule_type: 'positive' | 'negative' | 'required'; target_field: 'title' | 'description' | 'all'; weight: number; enabled: boolean;
 }
 export interface CategoryPreference { id: string; user_id: string; category: string; weight: number; enabled: boolean; }
+export type ArticleSort = 'relevance' | 'newest' | 'oldest';
+
 export interface UserSettings {
   user_id: string; scan_interval_minutes: number; article_retention_days: number; scan_log_retention_days: number; database_limit_mb: number; page_size: number; duplicate_threshold: number;
-  default_sort: 'relevance' | 'newest'; show_hidden: boolean; image_fallback_mode: 'logo' | 'category';
+  default_sort: ArticleSort; show_hidden: boolean; image_fallback_mode: 'logo' | 'category';
 }
 export interface ArticleFilters {
-  search: string; sort: 'relevance' | 'newest'; state: 'all' | 'unread' | 'saved'; category: string; sourceId: string;
+  search: string; sort: ArticleSort; state: 'all' | 'unread' | 'saved'; category: string; sourceId: string;
   minScore: number; fromDate: string; toDate: string; page: number; pageSize: number;
 }
 

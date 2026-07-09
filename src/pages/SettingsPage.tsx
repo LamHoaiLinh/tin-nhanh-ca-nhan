@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { errorMessage } from '../utils/error';
 import { fetchDatabaseStorageHealth } from '../services/storage';
 import { formatBytes } from '../utils/storage';
+import { ARTICLE_SORT_OPTIONS } from '../config/articleSort';
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -74,8 +75,10 @@ export function SettingsPage() {
           <input type="number" min="15" max="1440" value={settings.scan_interval_minutes} onChange={(event) => setSettings({ ...settings, scan_interval_minutes: Number(event.target.value) })} />
         </label>
         <label>
-          <span className="label-with-tip">Thứ tự hiển thị <HelpTip text="Các bài đã qua bộ lọc cá nhân hóa và luôn được xếp theo thời gian đăng mới nhất." /></span>
-          <input value="Mới nhất trước" readOnly aria-readonly="true" />
+          <span className="label-with-tip">Thứ tự hiển thị <HelpTip text="Chọn cách sắp xếp mặc định khi mở trang tin. Bạn vẫn có thể đổi tạm thời trong Bộ lọc." /></span>
+          <select value={settings.default_sort} onChange={(event) => setSettings({ ...settings, default_sort: event.target.value as UserSettings['default_sort'] })}>
+            {ARTICLE_SORT_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+          </select>
         </label>
         <label>
           <span className="label-with-tip">Ảnh dự phòng <HelpTip text="Dùng logo nguồn hoặc ảnh chuyên mục khi RSS không cung cấp ảnh bài viết." /></span>

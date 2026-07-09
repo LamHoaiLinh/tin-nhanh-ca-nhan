@@ -49,7 +49,14 @@ npx -y deno@2.5.6 check --config supabase/functions/summarize-article/deno.json 
 
 ## Bổ sung quản lý dung lượng
 - TypeScript typecheck: đạt.
-- Vitest: 10/10 file, 44/44 test đạt.
+- Vitest: 11/11 file, 47/47 test đạt.
 - Production build: đạt.
 - Kiểm thử mới: phân mức cảnh báo 70%/80% và định dạng dung lượng.
-- Danh sách bài đã chuyển sang sắp xếp cố định theo `published_at DESC`.
+- Danh sách bài mặc định xếp theo `published_at DESC`, đồng thời hỗ trợ sắp xếp theo điểm phù hợp hoặc thời gian cũ nhất.
+
+
+## Bổ sung tùy chọn sắp xếp và từ khóa gợi ý
+- TypeScript typecheck: đạt.
+- Vitest: 11/11 file, 47/47 test đạt.
+- Production build: đạt.
+- Kiểm thử mới xác nhận mới nhất là mặc định, đủ ba chế độ sắp xếp, trọng số gợi ý là 3/10 và danh mục gợi ý không có từ khóa trùng trong cùng nhóm.

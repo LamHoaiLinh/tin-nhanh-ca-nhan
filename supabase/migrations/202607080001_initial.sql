@@ -96,7 +96,7 @@ create table if not exists public.user_settings (
   database_limit_mb integer not null default 500 check (database_limit_mb between 100 and 1048576),
   page_size integer not null default 20 check (page_size in (10,20,30,50)),
   duplicate_threshold numeric(4,3) not null default 0.820,
-  default_sort text not null default 'newest' check (default_sort in ('relevance','newest')),
+  default_sort text not null default 'newest' check (default_sort in ('relevance','newest','oldest')),
   show_hidden boolean not null default false,
   image_fallback_mode text not null default 'logo' check (image_fallback_mode in ('logo','category'))
 );

@@ -63,11 +63,13 @@ GitHub Actions
 ## Triển khai mới
 
 1. Upload toàn bộ source lên GitHub.
-2. Chạy hai migration theo thứ tự:
+2. Chạy các migration theo thứ tự:
 
 ```text
 supabase/migrations/202607080001_initial.sql
 supabase/migrations/202607090001_verified_default_sources.sql
+supabase/migrations/202607090002_storage_cleanup_and_newest.sql
+supabase/migrations/202607090003_sort_options.sql
 ```
 
 3. Deploy bốn Edge Functions.
@@ -135,4 +137,13 @@ Chạy migration `202607090002_storage_cleanup_and_newest.sql` để bổ sung:
 - hàm đo dung lượng PostgreSQL;
 - mặc định xếp tin theo thời gian đăng mới nhất.
 
+Chạy thêm migration `202607090003_sort_options.sql` để cho phép ba cách sắp xếp: mới nhất, phù hợp nhất và cũ nhất.
+
 Workflow `Cleanup Old Articles` chạy hằng ngày, xóa bài cũ chưa lưu, xóa `scan_logs` quá hạn và cảnh báo khi database đạt 70% hoặc 80% giới hạn cấu hình.
+
+
+## Tùy chọn sắp xếp và từ khóa gợi ý
+- Trang Cài đặt cho phép chọn `Mới nhất trước`, `Phù hợp nhất` hoặc `Cũ nhất trước`; mặc định vẫn là mới nhất.
+- Trang Tin tức tự đọc lựa chọn mặc định từ `user_settings`, đồng thời Bộ lọc cho phép đổi tạm thời.
+- Trang Sở thích có nút `Các từ khóa gợi ý`. Danh sách được tổ chức theo lĩnh vực bao quát; mỗi lần chỉ mở một lĩnh vực.
+- Bấm một từ khóa chi tiết sẽ thêm quy tắc `Tăng điểm`, phạm vi `Tiêu đề + mô tả`, trọng số trung bình `3/10`; từ khóa đã có được nhận diện và không tạo bản ghi trùng.

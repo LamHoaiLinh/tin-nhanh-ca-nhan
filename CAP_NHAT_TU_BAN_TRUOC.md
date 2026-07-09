@@ -95,3 +95,10 @@ Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `su
 - Có thể đặt giới hạn database theo gói Supabase đang dùng; mặc định 500 MB.
 - Danh sách tin luôn xếp theo thời gian đăng mới nhất sau khi đã qua bộ lọc cá nhân hóa.
 - Migration cần chạy: `supabase/migrations/202607090002_storage_cleanup_and_newest.sql`.
+
+
+## Cập nhật tùy chọn sắp xếp và từ khóa gợi ý
+1. Upload toàn bộ source mới lên GitHub.
+2. Chạy migration `supabase/migrations/202607090003_sort_options.sql` đúng một lần trong Supabase SQL Editor.
+3. Chờ Render build lại. Không cần deploy lại Edge Functions vì thay đổi lần này thuộc frontend và ràng buộc cài đặt.
+4. Kiểm tra trang Cài đặt có ba lựa chọn sắp xếp và trang Sở thích có nút `Các từ khóa gợi ý`.
