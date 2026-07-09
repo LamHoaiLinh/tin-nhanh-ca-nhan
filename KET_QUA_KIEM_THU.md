@@ -60,3 +60,11 @@ npx -y deno@2.5.6 check --config supabase/functions/summarize-article/deno.json 
 - Vitest: 11/11 file, 47/47 test đạt.
 - Production build: đạt.
 - Kiểm thử mới xác nhận mới nhất là mặc định, đủ ba chế độ sắp xếp, trọng số gợi ý là 3/10 và danh mục gợi ý không có từ khóa trùng trong cùng nhóm.
+
+
+## Bổ sung câu hỏi gợi mở cuối bản tóm tắt
+- TypeScript typecheck: đạt.
+- Vitest: 11/11 file, 50/50 test đạt.
+- Vite production build: đạt.
+- Kiểm thử mới xác nhận câu hỏi được phân nhóm, không trùng loại, có dấu hỏi, bài ngắn chỉ tạo tối đa hai câu và nội dung quá ngắn không tạo câu hỏi.
+- Deno check trong môi trường đóng gói không hoàn tất do lỗi DNS tạm thời khi tải package; phần TypeScript dùng chung đã được Vitest biên dịch và workflow Supabase cần chạy lại khi triển khai.

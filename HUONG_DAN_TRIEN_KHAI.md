@@ -122,3 +122,11 @@ Sau khi upload phiên bản này, chạy thêm migration:
 `supabase/migrations/202607090003_sort_options.sql`
 
 Migration mở rộng ràng buộc `default_sort` để hỗ trợ `newest`, `relevance` và `oldest`. Sau khi Render triển khai xong, chọn thứ tự mặc định trong Cài đặt. Từ khóa gợi ý không cần migration riêng vì chúng được thêm vào bảng `keyword_rules` khi người dùng bấm chọn.
+
+
+## Triển khai cập nhật câu hỏi gợi mở
+1. Upload toàn bộ source mới lên GitHub và commit vào nhánh `main`.
+2. Vào `GitHub > Actions > Deploy Supabase Edge Functions > Run workflow` để cập nhật `summarize-article`.
+3. Chờ Render tự build frontend; khi cần chọn `Manual Deploy > Clear build cache & deploy`.
+4. Không có migration SQL mới cho tính năng này.
+5. Mở một bài đủ dài, cuộn xuống cuối bản tóm tắt và kiểm tra khung `Đọc sâu hơn – Câu hỏi gợi mở`.

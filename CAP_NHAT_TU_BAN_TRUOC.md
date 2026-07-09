@@ -102,3 +102,11 @@ Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `su
 2. Chạy migration `supabase/migrations/202607090003_sort_options.sql` đúng một lần trong Supabase SQL Editor.
 3. Chờ Render build lại. Không cần deploy lại Edge Functions vì thay đổi lần này thuộc frontend và ràng buộc cài đặt.
 4. Kiểm tra trang Cài đặt có ba lựa chọn sắp xếp và trang Sở thích có nút `Các từ khóa gợi ý`.
+
+## Bổ sung câu hỏi gợi mở cuối bản tóm tắt
+- Edge Function `summarize-article` tự phân tích dữ kiện, nguyên nhân, góc nhìn, tác động, khả năng triển khai và diễn biến cần theo dõi.
+- Bài đủ toàn văn hiển thị 3–5 câu hỏi; bài ngắn hoặc chỉ có mô tả RSS hiển thị tối đa 1–2 câu; nội dung quá ngắn sẽ không tạo câu hỏi để tránh suy diễn.
+- Không dùng mô hình AI hoặc API trả phí. Câu hỏi được sinh bằng tín hiệu ngôn ngữ, số liệu, mốc thời gian và mẫu có kiểm soát.
+- Cuối cửa sổ tóm tắt có khung `Đọc sâu hơn – Câu hỏi gợi mở`, viền nổi bật, đánh số và phân loại từng câu hỏi.
+- Không lưu câu hỏi hoặc toàn văn lâu dài vào database; kết quả chỉ được trả về cho phiên đọc hiện tại.
+- Sau khi cập nhật GitHub phải chạy lại workflow `Deploy Supabase Edge Functions`; Render tự triển khai phần giao diện.

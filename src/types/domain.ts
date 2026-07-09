@@ -30,13 +30,19 @@ export interface ArticleFilters {
   minScore: number; fromDate: string; toDate: string; page: number; pageSize: number;
 }
 
+export interface InsightQuestion {
+  kind: 'evidence' | 'cause' | 'perspective' | 'impact' | 'implementation' | 'follow-up';
+  label: string;
+  question: string;
+}
+
 export interface ArticleSummary {
   articleId: string; title: string; sourceName: string; originalUrl: string;
   extractionMethod: 'json-ld' | 'readability' | 'site-selector' | 'article' | 'main' | 'paragraphs' | 'amp-readability' | 'amp-site-selector' | 'mobile-readability' | 'mobile-site-selector' | 'rss-description';
   extractionVariant?: 'original' | 'discovered-amp-mobile' | 'heuristic-amp-mobile' | 'rss-description';
   extractionAttempts?: Array<{ variant: string; ok: boolean; status: number | null; method: string | null; wordCount: number | null; message: string }>;
   warning: string | null; paragraphs: string[]; originalWordCount: number; summaryWordCount: number;
-  compressionRatio: number; selectedSentenceCount: number;
+  compressionRatio: number; selectedSentenceCount: number; insightQuestions: InsightQuestion[];
 }
 export interface FeedValidationResult {
   valid: boolean; feedName: string; websiteUrl: string | null; itemCount: number; newestDate: string | null; hasImage: boolean; format: 'RSS 2.0' | 'Atom' | 'RDF' | 'Unknown';

@@ -12,6 +12,13 @@ export interface SummaryResult {
   summaryWordCount: number;
   compressionRatio: number;
   selectedSentenceCount: number;
+  insightQuestions: InsightQuestion[];
+}
+
+export interface InsightQuestion {
+  kind: 'evidence' | 'cause' | 'perspective' | 'impact' | 'implementation' | 'follow-up';
+  label: string;
+  question: string;
 }
 
 interface SentenceCandidate {
@@ -236,11 +243,208 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+interface QuestionCandidate extends InsightQuestion {
+  score: number;
+}
+
+const QUESTION_LABELS: Record<InsightQuestion['kind'], string> = {
+  evidence: 'Kiểm chứng dữ kiện',
+  cause: 'Đào sâu nguyên nhân',
+  perspective: 'Góc nhìn còn thiếu',
+  impact: 'Tác động thực tế',
+  implementation: 'Khả năng thực hiện',
+  'follow-up': 'Điều cần theo dõi',
+};
+
+function compactSignal(value: string, maxLength = 54): string {
+  const clean = value.replace(/\s+/g, ' ').replace(/[,:;.!?…]+$/u, '').trim();
+  if (clean.length <= maxLength) return clean;
+  return `${clean.slice(0, maxLength).replace(/\s+\S*$/u, '').trim()}…`;
+}
+
+function extractNumberSignal(text: string): string | null {
+  const match = text.match(/\b\d+(?:[.,]\d+)*(?:\s*(?:%|tỷ(?:\s+đồng)?|triệu(?:\s+đồng)?|nghìn(?:\s+đồng)?|đồng|năm|tháng|ngày|giờ|ha|km|m2|m²))?/iu);
+  return match?.[0] ? compactSignal(match[0], 34) : null;
+}
+
+function addQuestionCandidate(
+  candidates: QuestionCandidate[],
+  kind: InsightQuestion['kind'],
+  question: string,
+  score: number,
+): void {
+  const clean = question.replace(/\s+/g, ' ').trim();
+  if (!clean || clean.length < 24) return;
+  const key = normalizeLoose(clean);
+  if (candidates.some((item) => normalizeLoose(item.question) === key)) return;
+  candidates.push({ kind, label: QUESTION_LABELS[kind], question: clean, score });
+}
+
+export function buildInsightQuestions(title: string, paragraphs: string[], seed = Date.now()): InsightQuestion[] {
+  const cleanParagraphs = uniqueParagraphs(paragraphs);
+  const text = cleanParagraphs.join(' ');
+  const totalWords = wordCount(text);
+  if (totalWords < 45) return [];
+
+  const normalized = normalizeLoose(`${title} ${text}`);
+  const random = seededRandom(seed ^ 0x51f15e7d);
+  const numberSignal = extractNumberSignal(text);
+  const candidates: QuestionCandidate[] = [];
+
+  const hasCause = /\b(vì|do|nguyên nhân|xuất phát|bắt nguồn|lý do|dẫn tới|dẫn đến)\b/iu.test(text);
+  const hasImpact = /\b(ảnh hưởng|tác động|hệ quả|thiệt hại|lợi ích|chi phí|rủi ro|kéo theo|hậu quả)\b/iu.test(text);
+  const hasContrast = /\b(nhưng|tuy nhiên|song|trái lại|trong khi|mặc dù|dù vậy|lo ngại|tranh luận|ý kiến)\b/iu.test(text);
+  const hasPlan = /\b(đề xuất|kiến nghị|kế hoạch|dự kiến|cam kết|giải pháp|lộ trình|triển khai|thực hiện|nghị quyết|quyết định|quy định|chính sách|dự án)\b/iu.test(text);
+  const hasInstitution = /\b(bo|so|uy ban|ubnd|chinh phu|quoc hoi|doanh nghiep|co quan|chu dau tu|don vi|ban quan ly)\b/iu.test(normalized);
+  const hasFuture = /\b(sẽ|dự kiến|thời gian tới|tiếp tục|lộ trình|mục tiêu|cam kết|hoàn thành|hạn chót)\b/iu.test(text);
+  const hasSourceClaim = /\b(theo|cho biết|khẳng định|nhận định|báo cáo|số liệu|thống kê|nghiên cứu|kết quả)\b/iu.test(text);
+
+  if (numberSignal) {
+    addQuestionCandidate(
+      candidates,
+      'evidence',
+      randomItem([
+        `Con số “${numberSignal}” được xác định từ nguồn nào và có thể đối chiếu bằng tài liệu nào?`,
+        `Dữ kiện “${numberSignal}” phản ánh thời điểm nào, phạm vi nào và còn điều kiện đi kèm nào chưa được nêu rõ?`,
+        `Khi kiểm chứng con số “${numberSignal}”, người đọc cần so sánh thêm với mốc hoặc nguồn dữ liệu nào?`,
+      ], random),
+      9,
+    );
+  } else if (hasSourceClaim) {
+    addQuestionCandidate(
+      candidates,
+      'evidence',
+      randomItem([
+        'Những dữ kiện then chốt trong bài dựa trên nguồn nào, và phần nào cần được đối chiếu thêm?',
+        'Các kết luận chính được hỗ trợ bởi số liệu hay tài liệu nào, và nguồn đó có đủ cập nhật không?',
+      ], random),
+      7.2,
+    );
+  }
+
+  if (hasCause) {
+    addQuestionCandidate(
+      candidates,
+      'cause',
+      randomItem([
+        'Bài viết đã phân biệt rõ nguyên nhân trực tiếp với nguyên nhân mang tính hệ thống hay chưa?',
+        'Trong các nguyên nhân được nêu, yếu tố nào có bằng chứng mạnh nhất và yếu tố nào mới chỉ là nhận định?',
+        'Nếu tách nguyên nhân chủ quan và khách quan, phần trách nhiệm của từng bên được thể hiện đến đâu?',
+      ], random),
+      8.3,
+    );
+  }
+
+  if (hasContrast || /\b(một số|nhiều bên|hai phía|trái chiều)\b/iu.test(text)) {
+    addQuestionCandidate(
+      candidates,
+      'perspective',
+      randomItem([
+        'Những bên liên quan hoặc góc nhìn trái chiều nào chưa được phản ánh đầy đủ trong nội dung?',
+        'Bài viết đang dựa nhiều hơn vào quan điểm của bên nào, và tiếng nói nào còn thiếu để nhìn vấn đề cân bằng hơn?',
+        'Các ý kiến khác nhau trong bài có cùng dựa trên một bộ dữ kiện hay đang xuất phát từ những giả định khác nhau?',
+      ], random),
+      8.5,
+    );
+  }
+
+  if (hasImpact) {
+    addQuestionCandidate(
+      candidates,
+      'impact',
+      randomItem([
+        'Tác động ngắn hạn và dài hạn đối với người dân, doanh nghiệp hoặc cơ quan liên quan khác nhau như thế nào?',
+        'Ai là nhóm chịu ảnh hưởng rõ nhất, và tác động thực tế nên được đo bằng tiêu chí nào?',
+        'Ngoài hệ quả trực tiếp được nêu, vấn đề còn có thể kéo theo chi phí hoặc rủi ro nào chưa được lượng hóa?',
+      ], random),
+      8.1,
+    );
+  } else if (totalWords >= 180) {
+    addQuestionCandidate(
+      candidates,
+      'impact',
+      'Thông tin này có thể làm thay đổi quyết định hoặc hành vi của người dân, doanh nghiệp hay cơ quan quản lý ra sao?',
+      5.8,
+    );
+  }
+
+  if (hasPlan) {
+    addQuestionCandidate(
+      candidates,
+      'implementation',
+      randomItem([
+        'Đề xuất hoặc kế hoạch trong bài đã có thời hạn, nguồn lực, đầu mối chịu trách nhiệm và cơ chế giám sát cụ thể chưa?',
+        'Điều kiện nào phải được đáp ứng để giải pháp được triển khai đúng tiến độ thay vì chỉ dừng ở chủ trương?',
+        'Nếu kế hoạch không đạt mục tiêu, bài viết có nêu phương án điều chỉnh hoặc tiêu chí đánh giá lại hay chưa?',
+      ], random),
+      hasInstitution ? 8.4 : 7.4,
+    );
+  }
+
+  if (hasInstitution && !hasPlan) {
+    addQuestionCandidate(
+      candidates,
+      'implementation',
+      'Vai trò, thẩm quyền và trách nhiệm của từng cơ quan hoặc đơn vị liên quan đã được xác định rõ đến mức nào?',
+      6.8,
+    );
+  }
+
+  if (hasFuture || totalWords >= 120) {
+    addQuestionCandidate(
+      candidates,
+      'follow-up',
+      randomItem([
+        'Mốc thời gian, chỉ số hoặc diễn biến nào cần theo dõi tiếp để biết vấn đề đã thực sự được giải quyết?',
+        'Trong thời gian tới, thông tin nào sẽ là bằng chứng rõ nhất cho thấy cam kết hoặc dự báo trong bài đang đi đúng hướng?',
+        'Người đọc nên kiểm tra lại điều gì ở lần cập nhật tiếp theo để tránh chỉ dừng ở tuyên bố ban đầu?',
+      ], random),
+      7.6,
+    );
+  }
+
+  if (!candidates.some((item) => item.kind === 'perspective') && totalWords >= 220) {
+    addQuestionCandidate(
+      candidates,
+      'perspective',
+      'Có giả định, giới hạn dữ liệu hoặc góc nhìn nào trong bài có thể làm thay đổi cách hiểu về kết luận chính?',
+      5.9,
+    );
+  }
+
+  const maxQuestions = totalWords >= 650 ? 5 : totalWords >= 260 ? 4 : totalWords >= 110 ? 3 : 2;
+  const ranked = candidates.sort((a, b) => b.score - a.score || random() - 0.5);
+  const selected: InsightQuestion[] = [];
+  const usedKinds = new Set<InsightQuestion['kind']>();
+
+  for (const candidate of ranked) {
+    if (selected.length >= maxQuestions) break;
+    if (usedKinds.has(candidate.kind)) continue;
+    usedKinds.add(candidate.kind);
+    selected.push({ kind: candidate.kind, label: candidate.label, question: candidate.question });
+  }
+
+  if (selected.length < Math.min(2, maxQuestions) && totalWords >= 70) {
+    const fallbacks: InsightQuestion[] = [
+      { kind: 'evidence', label: QUESTION_LABELS.evidence, question: 'Dữ kiện nào trong bài quan trọng nhất và cần được kiểm chứng thêm từ nguồn độc lập?' },
+      { kind: 'follow-up', label: QUESTION_LABELS['follow-up'], question: 'Diễn biến nào cần được theo dõi tiếp để đánh giá liệu kết luận của bài còn đúng theo thời gian?' },
+    ];
+    for (const item of fallbacks) {
+      if (selected.length >= Math.min(2, maxQuestions)) break;
+      if (!usedKinds.has(item.kind)) {
+        usedKinds.add(item.kind);
+        selected.push(item);
+      }
+    }
+  }
+  return selected;
+}
+
 export function summarizeArticleText(title: string, paragraphs: string[], seed = Date.now()): SummaryResult {
   const cleanParagraphs = uniqueParagraphs(paragraphs);
   const originalText = cleanParagraphs.join(' ');
   const originalWordCount = wordCount(originalText);
-  if (!originalWordCount) return { paragraphs: [], originalWordCount: 0, summaryWordCount: 0, compressionRatio: 0, selectedSentenceCount: 0 };
+  if (!originalWordCount) return { paragraphs: [], originalWordCount: 0, summaryWordCount: 0, compressionRatio: 0, selectedSentenceCount: 0, insightQuestions: [] };
 
   const candidates: SentenceCandidate[] = [];
   cleanParagraphs.forEach((paragraph, paragraphIndex) => {
@@ -252,7 +456,7 @@ export function summarizeArticleText(title: string, paragraphs: string[], seed =
 
   if (candidates.length <= 3) {
     const text = candidates.map((item) => item.text).join(' ') || originalText;
-    return { paragraphs: [text], originalWordCount, summaryWordCount: wordCount(text), compressionRatio: wordCount(text) / originalWordCount, selectedSentenceCount: candidates.length };
+    return { paragraphs: [text], originalWordCount, summaryWordCount: wordCount(text), compressionRatio: wordCount(text) / originalWordCount, selectedSentenceCount: candidates.length, insightQuestions: buildInsightQuestions(title, cleanParagraphs, seed) };
   }
 
   const frequencies = new Map<string, number>();
@@ -331,5 +535,6 @@ export function summarizeArticleText(title: string, paragraphs: string[], seed =
     summaryWordCount,
     compressionRatio: originalWordCount ? summaryWordCount / originalWordCount : 0,
     selectedSentenceCount: ordered.length,
+    insightQuestions: buildInsightQuestions(title, cleanParagraphs, seed),
   };
 }

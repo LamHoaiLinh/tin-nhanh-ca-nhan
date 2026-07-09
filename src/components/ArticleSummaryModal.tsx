@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ArticleFeedItem, ArticleSummary } from '../types/domain';
+import type { ArticleFeedItem, ArticleSummary, InsightQuestion } from '../types/domain';
 import { summarizeArticle } from '../services/functions';
 
 interface Props {
@@ -22,6 +22,21 @@ function fallbackSummary(article: ArticleFeedItem, reason?: string): ArticleSumm
   const description = article.description?.replace(/\s+/g, ' ').trim();
   if (!description || description.length < 35) return null;
   const wordCount = description.split(/\s+/).filter(Boolean).length;
+  const allFallbackQuestions: InsightQuestion[] = [
+    {
+      kind: 'evidence',
+      label: 'Kiểm chứng dữ kiện',
+      question: 'Dữ kiện nào trong phần mở đầu này cần được đối chiếu thêm khi đọc bài gốc?',
+    },
+    {
+      kind: 'follow-up',
+      label: 'Điều cần theo dõi',
+      question: 'Diễn biến nào cần được theo dõi tiếp để biết vấn đề đã thay đổi ra sao?',
+    },
+  ];
+  const fallbackQuestions = wordCount >= 45
+    ? allFallbackQuestions.slice(0, wordCount >= 80 ? 2 : 1)
+    : [];
   return {
     articleId: article.id,
     title: article.title,
@@ -34,6 +49,7 @@ function fallbackSummary(article: ArticleFeedItem, reason?: string): ArticleSumm
     summaryWordCount: wordCount,
     compressionRatio: 1,
     selectedSentenceCount: Math.max(1, description.split(/(?<=[.!?…])\s+/u).length),
+    insightQuestions: fallbackQuestions,
   };
 }
 
@@ -187,6 +203,27 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
               {result.paragraphs.map((paragraph, index) => (
                 <p key={`${article.id}-${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
               ))}
+              {result.insightQuestions?.length > 0 && (
+                <aside className="summary-insight-box" aria-labelledby={`insight-title-${article.id}`}>
+                  <div className="summary-insight-heading">
+                    <span className="summary-insight-mark" aria-hidden="true">?</span>
+                    <div>
+                      <span className="summary-insight-eyebrow">Đọc sâu hơn</span>
+                      <h3 id={`insight-title-${article.id}`}>Câu hỏi gợi mở</h3>
+                      <p>Những điểm đáng dừng lại suy nghĩ hoặc kiểm chứng thêm sau khi đọc bản tóm tắt.</p>
+                    </div>
+                  </div>
+                  <ol className="summary-insight-list">
+                    {result.insightQuestions.map((item, index) => (
+                      <li key={`${item.kind}-${index}-${item.question.slice(0, 28)}`}>
+                        <span className={`summary-insight-kind kind-${item.kind}`}>{item.label}</span>
+                        <strong>{item.question}</strong>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="summary-insight-note">Các câu hỏi chỉ nhằm hỗ trợ đọc phản biện, không thay thế việc kiểm tra bài báo gốc và nguồn dữ liệu liên quan.</p>
+                </aside>
+              )}
             </article>
           ) : (
             <div className="summary-error">

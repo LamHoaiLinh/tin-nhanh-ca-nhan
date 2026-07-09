@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractArticleFromHtml, summarizeArticleText } from '../supabase/functions/_shared/article-summary';
+import { buildInsightQuestions, extractArticleFromHtml, summarizeArticleText } from '../supabase/functions/_shared/article-summary';
 
 const paragraphs = [
   'Thành phố đang xây dựng phương án điều chỉnh giao thông tại khu vực trung tâm nhằm giảm ùn tắc kéo dài trong giờ cao điểm. Kế hoạch tập trung vào việc tổ chức lại luồng xe, tăng kết nối vận tải công cộng và kiểm soát các điểm thường xuyên phát sinh xung đột.',
@@ -40,6 +40,26 @@ describe('trích xuất và tóm tắt bài báo', () => {
     const second = summarizeArticleText('Điều chỉnh giao thông trung tâm để giảm ùn tắc', paragraphs, 999);
     expect(first.paragraphs.join(' ')).not.toBe(second.paragraphs.join(' '));
     expect(first.selectedSentenceCount).toBe(second.selectedSentenceCount);
+  });
+
+  it('tạo câu hỏi gợi mở theo dữ kiện, góc nhìn và khả năng thực hiện', () => {
+    const questions = buildInsightQuestions('Điều chỉnh giao thông trung tâm để giảm ùn tắc', paragraphs, 2026);
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+    expect(questions.length).toBeLessThanOrEqual(5);
+    expect(new Set(questions.map((item) => item.kind)).size).toBe(questions.length);
+    expect(questions.some((item) => item.kind === 'evidence')).toBe(true);
+    expect(questions.some((item) => item.kind === 'perspective' || item.kind === 'implementation')).toBe(true);
+    expect(questions.every((item) => item.question.endsWith('?'))).toBe(true);
+  });
+
+  it('không tạo quá nhiều câu hỏi khi chỉ có nội dung ngắn kiểu RSS', () => {
+    const short = ['Cơ quan quản lý dự kiến sửa quy định trong tháng tới, nhưng chưa công bố lộ trình và nguồn lực thực hiện. Thay đổi này có thể ảnh hưởng đến doanh nghiệp và người dân trong quá trình làm thủ tục.'];
+    const questions = buildInsightQuestions('Dự kiến sửa quy định trong tháng tới', short, 7);
+    expect(questions.length).toBeLessThanOrEqual(2);
+  });
+
+  it('bỏ phần câu hỏi khi nội dung quá ngắn để suy luận an toàn', () => {
+    expect(buildInsightQuestions('Tin ngắn', ['Thông báo mới vừa được công bố.'], 1)).toEqual([]);
   });
 });
 

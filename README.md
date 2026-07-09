@@ -108,7 +108,7 @@ npm test
 npm run build
 ```
 
-Kết quả bản đóng gói cuối: 9 test files, 42 test cases đạt; TypeScript, Vite production build và Deno typecheck cho Edge Function tóm tắt đều đạt.
+Kết quả bản đóng gói hiện tại: 11 file kiểm thử, 50 test đạt; TypeScript và Vite production build đạt. Edge Function tiếp tục được kiểm tra trong workflow deploy Supabase.
 
 ## Bảo mật và giới hạn
 
@@ -129,6 +129,8 @@ Mỗi thẻ tin có nút `Sao chép link` và `Tóm tắt`. Tiêu đề, hình v
 6. Chỉ dùng mô tả RSS khi toàn bộ các tầng trên thất bại.
 
 Mỗi trang bị giới hạn redirect, timeout, kích thước 6 MB, kiểm tra DNS/SSRF và tổng thời gian xử lý khoảng 28 giây. Thuật toán sau đó chọn các câu quan trọng và tạo bản tóm tắt khoảng 25–35%; cách nối câu, bố cục và tỷ lệ được xử lý tự động. Giao diện đọc có ba cỡ chữ, cuộn nội dung, chuyển bài trước/bài tiếp theo và lưu tạm kết quả trong phiên. Không dùng API AI trả phí và không lưu toàn văn bài báo.
+
+Cuối mỗi bản tóm tắt, hệ thống tạo khung `Đọc sâu hơn – Câu hỏi gợi mở`. Thuật toán phát hiện số liệu, nguyên nhân, hệ quả, góc nhìn trái chiều, kế hoạch triển khai và mốc cần theo dõi để chọn 3–5 câu hỏi cho bài đầy đủ; nội dung RSS ngắn chỉ có tối đa 1–2 câu. Nội dung quá ngắn không sinh câu hỏi nhằm hạn chế suy diễn.
 
 ## Quản lý dung lượng database
 Chạy migration `202607090002_storage_cleanup_and_newest.sql` để bổ sung:
