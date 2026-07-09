@@ -1,114 +1,56 @@
-TIN NHANH CÁ NHÂN - CẤU TRÚC DỰ ÁN
+TIN NHANH CÁ NHÂN - CẤU TRÚC BẢN CUỐI
 
-.env.example
-.github/workflows/cleanup-old-articles.yml
-.github/workflows/scan-rss.yml
-.github/workflows/test-build.yml
-.gitignore
-HUONG_DAN_TRIEN_KHAI.md
-KET_QUA_KIEM_THU.md
-KIEN_TRUC_VA_THUAT_TOAN.md
-README.md
-YEU_CAU_GOC.txt
-build.bat
-deno.json
-deno.lock
-dist/_redirects
-dist/assets/ArticleDetailPage-DzA22ccX.js
-dist/assets/ArticleDetailPage-DzA22ccX.js.map
-dist/assets/ArticlesPage-qcCWQ2kK.js
-dist/assets/ArticlesPage-qcCWQ2kK.js.map
-dist/assets/LoginPage-C2oZ6uLc.js
-dist/assets/LoginPage-C2oZ6uLc.js.map
-dist/assets/RulesPage-B68HUDoh.js
-dist/assets/RulesPage-B68HUDoh.js.map
-dist/assets/SettingsPage-NPS-Sbg7.js
-dist/assets/SettingsPage-NPS-Sbg7.js.map
-dist/assets/SourcesPage-3stbWK_D.js
-dist/assets/SourcesPage-3stbWK_D.js.map
-dist/assets/date-nLPfhBcl.js
-dist/assets/date-nLPfhBcl.js.map
-dist/assets/error-CQQrV3-J.js
-dist/assets/error-CQQrV3-J.js.map
-dist/assets/functions-Cl_n7lJQ.js
-dist/assets/functions-Cl_n7lJQ.js.map
-dist/assets/index-DL_oBCNC.css
-dist/assets/index-eaPEyS2G.js
-dist/assets/index-eaPEyS2G.js.map
-dist/assets/supabase-DbDiUhrO.js
-dist/assets/supabase-DbDiUhrO.js.map
-dist/assets/useKeyboardShortcuts-4BrHIk9z.js
-dist/assets/useKeyboardShortcuts-4BrHIk9z.js.map
-dist/assets/useQuery-DyiaPwR6.js
-dist/assets/useQuery-DyiaPwR6.js.map
-dist/favicon.svg
-dist/index.html
-dist/placeholder-news.svg
-index.html
-package-lock.json
+.github/workflows/
+  cleanup-old-articles.yml
+  deploy-supabase-functions.yml
+  scan-rss.yml
+  test-build.yml
+
+src/
+  algorithms/                 Thuật toán chuẩn hóa, lọc trùng, chấm điểm, SSRF
+  components/
+    AppShell.tsx
+    ArticleCard.tsx
+    BottomNav.tsx
+    DetailBottomNav.tsx
+    FilterSheet.tsx
+    HelpTip.tsx               Tooltip hướng dẫn khi hover/focus
+    StartupBootstrap.tsx      Thêm nguồn mặc định và quét khi vào ứng dụng
+  config/
+    defaultSources.ts         9 nguồn RSS đã kiểm tra
+  pages/
+    ArticlesPage.tsx
+    ArticleDetailPage.tsx
+    SourcesPage.tsx
+    RulesPage.tsx
+    SettingsPage.tsx
+    HelpPage.tsx              Hướng dẫn tiếng Việt
+    LoginPage.tsx
+  services/
+    bootstrap.ts              Bổ sung nguồn còn thiếu
+    functions.ts
+    sources.ts
+    articles.ts
+    supabase.ts
+  styles/global.css
+
+supabase/
+  functions/
+    validate-feed/
+    discover-feed/
+    scan-rss/
+    _shared/
+  migrations/
+    202607080001_initial.sql
+    202607090001_verified_default_sources.sql
+
+public/                     Favicon, placeholder, Render rewrite
+tests/                      8 file / 35 test
+render.yaml                 Render Static Site Blueprint
+.node-version               Node 24.14.1
 package.json
-public/_redirects
-public/favicon.svg
-public/placeholder-news.svg
-render.yaml
-run_local.bat
-scripts/cleanup-old-articles.ts
-scripts/seed-sources.ts
-src/App.tsx
-src/algorithms/duplicate.ts
-src/algorithms/image.ts
-src/algorithms/scoring.ts
-src/algorithms/similarity.ts
-src/algorithms/ssrf.ts
-src/algorithms/text.ts
-src/algorithms/url.ts
-src/components/AppShell.tsx
-src/components/ArticleCard.tsx
-src/components/BottomNav.tsx
-src/components/DetailBottomNav.tsx
-src/components/ErrorBoundary.tsx
-src/components/FilterSheet.tsx
-src/components/LoadingSkeleton.tsx
-src/components/ProtectedRoute.tsx
-src/hooks/useAuth.tsx
-src/hooks/useDebouncedValue.ts
-src/hooks/useKeyboardShortcuts.ts
-src/main.tsx
-src/pages/ArticleDetailPage.tsx
-src/pages/ArticlesPage.tsx
-src/pages/LoginPage.tsx
-src/pages/RulesPage.tsx
-src/pages/SettingsPage.tsx
-src/pages/SourcesPage.tsx
-src/services/articles.ts
-src/services/functions.ts
-src/services/sources.ts
-src/services/supabase.ts
-src/styles/global.css
-src/types/database.ts
-src/types/domain.ts
-src/utils/date.ts
-src/utils/error.ts
-supabase/config.toml
-supabase/functions/_shared/algorithms.ts
-supabase/functions/_shared/auth.ts
-supabase/functions/_shared/cors.ts
-supabase/functions/_shared/feed.ts
-supabase/functions/_shared/response.ts
-supabase/functions/_shared/security.ts
-supabase/functions/discover-feed/index.ts
-supabase/functions/scan-rss/index.ts
-supabase/functions/validate-feed/index.ts
-supabase/migrations/202607080001_initial.sql
-supabase/seed.sql
-tests/duplicate.test.ts
-tests/image.test.ts
-tests/scoring.test.ts
-tests/similarity.test.ts
-tests/ssrf.test.ts
-tests/text.test.ts
-tests/url.test.ts
-tsconfig.app.json
-tsconfig.json
-tsconfig.node.json
-vite.config.ts
+package-lock.json           Chỉ dùng registry.npmjs.org
+README.md
+HUONG_DAN_TRIEN_KHAI.md
+CAP_NHAT_TU_BAN_TRUOC.md
+KET_QUA_KIEM_THU.md

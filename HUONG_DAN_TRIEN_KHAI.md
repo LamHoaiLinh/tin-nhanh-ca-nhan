@@ -1,37 +1,25 @@
-# HƯỚNG DẪN TRIỂN KHAI TỪNG BƯỚC
+# HƯỚNG DẪN TRIỂN KHAI
 
-## 1. Chuẩn bị
+## A. Tạo mới hoàn toàn
 
-- GitHub account.
-- Supabase account.
-- Render account.
-- Node.js 22+.
-- Git và Supabase CLI.
+### 1. GitHub
 
-## 2. Đưa source lên GitHub
+Upload toàn bộ nội dung dự án vào thư mục gốc repository. Các thư mục `.github`, `src`, `supabase` phải nằm cùng cấp với `package.json` và `render.yaml`.
 
-```bash
-git init
-git add .
-git commit -m "Initial Tin Nhanh Ca Nhan"
-git branch -M main
-git remote add origin YOUR_GITHUB_REPOSITORY
-git push -u origin main
+### 2. Supabase Database
+
+Trong SQL Editor, chạy lần lượt:
+
+```text
+supabase/migrations/202607080001_initial.sql
+supabase/migrations/202607090001_verified_default_sources.sql
 ```
 
-Không commit `.env.local`, service role hoặc CRON_SECRET.
+Migration thứ hai tạo danh mục 9 nguồn đã xác nhận, thêm nguồn cho tài khoản hiện có và cập nhật trigger cho tài khoản mới.
 
-## 3. Supabase Database
+### 3. Edge Functions
 
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
-```
-
-Kiểm tra Table Editor có các bảng: `profiles`, `sources`, `articles`, `article_states`, `keyword_rules`, `category_preferences`, `user_settings`, `scan_logs`, `source_catalog`.
-
-## 4. Edge Functions
+Chạy workflow GitHub **Deploy Supabase Edge Functions** hoặc dùng CLI:
 
 ```bash
 supabase functions deploy validate-feed
@@ -39,71 +27,77 @@ supabase functions deploy discover-feed
 supabase functions deploy scan-rss
 ```
 
-`supabase/config.toml` đặt `verify_jwt=false` vì mỗi function tự xác thực JWT hoặc CRON_SECRET. Không bỏ hàm `authenticate` trong source.
+Supabase Edge Function secret:
 
-Tạo secret cron:
-
-```bash
-supabase secrets set CRON_SECRET="THAY_BANG_CHUOI_NGAU_NHIEN_32_KY_TU_TRO_LEN"
+```text
+CRON_SECRET
 ```
 
-## 5. Authentication
+### 4. GitHub Secrets
 
-Trong Supabase Dashboard:
+```text
+SUPABASE_ACCESS_TOKEN
+SUPABASE_PROJECT_ID
+SUPABASE_URL
+CRON_SECRET
+SUPABASE_SERVICE_ROLE_KEY
+```
 
-1. Authentication > Providers > Email: bật Email.
-2. Authentication > URL Configuration:
-   - Site URL: URL Render sau khi deploy.
-   - Redirect URLs: `http://localhost:5173/**` và `https://TEN-APP.onrender.com/**`.
-3. Có thể tắt Confirm email trong giai đoạn kiểm thử nội bộ; production nên bật.
+`SUPABASE_ACCESS_TOKEN` phải là Personal Access Token dạng `sbp_...`. `SUPABASE_PROJECT_ID` là Reference ID, không phải URL.
 
-## 6. Render
+### 5. Render
 
-Chọn New > Blueprint, kết nối repository. `render.yaml` tự cấu hình static site.
+Tạo **New > Blueprint**, chọn repository và `render.yaml`.
 
 Điền:
 
-- `VITE_SUPABASE_URL`.
-- `VITE_SUPABASE_PUBLISHABLE_KEY`.
-
-Không điền service role vào Render frontend.
-
-## 7. GitHub Secrets
-
-Repository > Settings > Secrets and variables > Actions:
-
-- `SUPABASE_URL`: `https://PROJECT_REF.supabase.co`.
-- `CRON_SECRET`: giống secret đã đặt ở Supabase.
-- `SUPABASE_SERVICE_ROLE_KEY`: chỉ dùng cleanup workflow.
-
-Vào Actions > Scan RSS > Run workflow để thử thủ công.
-
-## 8. Tạo tài khoản đầu tiên
-
-Mở website Render > Tạo tài khoản. Trigger database tự tạo dữ liệu mặc định. Sau đó:
-
-1. Vào Nguồn tin.
-2. Chọn nguồn gợi ý hoặc dán RSS.
-3. Kiểm tra RSS.
-4. Lưu và quét.
-5. Vào Sở thích để chỉnh trọng số.
-
-## 9. Kiểm tra nghiệm thu
-
-- Refresh vẫn đăng nhập.
-- Thêm nguồn thất bại nếu chưa kiểm tra.
-- Quét một nguồn không làm nguồn khác bị dừng khi lỗi.
-- Thẻ tin có ảnh/logo/placeholder.
-- Tin trùng hiện nhãn nhiều nguồn.
-- Từ khóa tích cực tăng điểm, từ khóa chặn ẩn bài mới.
-- Mobile 390–430 px không tràn ngang; thanh dưới không che nội dung.
-- Không tìm thấy chuỗi `service_role` trong `dist`:
-
-```bash
-npm run build
-grep -R "service_role\|SUPABASE_SERVICE_ROLE_KEY" dist && echo "CANH BAO" || echo "OK"
+```text
+VITE_SUPABASE_URL=https://PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-## 10. Sao lưu
+Không điền service role, secret key, access token hoặc CRON_SECRET vào Render.
 
-Supabase Free không thay thế chiến lược backup doanh nghiệp. Định kỳ xuất schema/data hoặc nâng gói có backup phù hợp. Không dùng ứng dụng này làm kho lưu duy nhất cho dữ liệu pháp lý quan trọng.
+Render sử dụng:
+
+```text
+Node 24.14.1
+Build: npm run build
+Publish: ./dist
+```
+
+### 6. Authentication URL
+
+Sau khi Render báo Live, vào Supabase:
+
+```text
+Authentication > URL Configuration
+```
+
+Điền URL Render vào Site URL và thêm:
+
+```text
+https://TEN-APP.onrender.com/**
+```
+
+### 7. Kiểm tra
+
+- Đăng nhập được và refresh vẫn giữ phiên.
+- 9 nguồn mặc định xuất hiện trong Nguồn tin.
+- Banner quét lần đầu xuất hiện khi vào ứng dụng.
+- Trang Trợ giúp mở được.
+- Workflow Scan RSS chạy xanh.
+
+## B. Cập nhật repository hiện tại
+
+Đọc `CAP_NHAT_TU_BAN_TRUOC.md`. Điểm bắt buộc là chạy migration `202607090001_verified_default_sources.sql` một lần và để Render build lại commit mới.
+
+## C. Xử lý lỗi Render npm ETIMEDOUT
+
+Bản cuối đã loại bỏ mọi URL registry nội bộ khỏi `package-lock.json` và `deno.lock`. Nếu Render còn dùng cache cũ:
+
+```text
+Manual Deploy > Clear build cache & deploy
+```
+
+Log đúng phải tải package từ `https://registry.npmjs.org/`.

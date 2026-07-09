@@ -1,227 +1,115 @@
 # TIN NHANH CÁ NHÂN
 
-Ứng dụng đọc RSS cá nhân bằng React + Supabase. Hệ thống chuẩn hóa URL và tiếng Việt, gom tin trùng, chọn bài đại diện và chấm điểm theo chuyên mục/từ khóa bằng thuật toán xác định. Không gọi OpenAI, Gemini, Claude, embedding hoặc API AI nào.
+Ứng dụng đọc RSS cá nhân bằng React, Supabase và Render. Hệ thống chuẩn hóa tiếng Việt, phát hiện tin trùng và chấm điểm theo quy tắc minh bạch, không dùng API AI trả phí.
 
-## Chức năng đã có
+## Điểm mới của bản cuối
 
-- Đăng ký, đăng nhập email/mật khẩu bằng Supabase Auth; phiên được lưu sau khi refresh.
-- Thêm, sửa, xóa, bật/tắt nguồn RSS; kiểm tra feed trước khi lưu.
-- Dò RSS từ URL website qua `link rel="alternate"` và các đường dẫn phổ biến.
-- Quét một nguồn hoặc toàn bộ nguồn; GitHub Actions quét phút 17 và 47 mỗi giờ.
-- Hỗ trợ RSS 2.0, Atom và RDF; đọc ảnh từ Media RSS, enclosure, content hoặc description.
-- Chống SSRF, giới hạn redirect, timeout 10 giây và phản hồi 2 MB.
-- Lọc trùng nhiều tầng: URL/GUID, normalized title, SimHash, Jaccard và character 3-gram.
-- Chọn bài đại diện theo ưu tiên nguồn, ảnh, mô tả, thời điểm đăng, URL/ngày và tác giả.
-- Chấm điểm 0–100 theo chuyên mục, từ khóa, nguồn, độ mới và chất lượng dữ liệu.
-- Tìm kiếm không dấu, lọc trạng thái/chuyên mục/nguồn/điểm/ngày, phân trang phía server.
-- Lưu, đã đọc, ẩn, tắt nguồn, chặn chủ đề; xem các nguồn khác cùng đăng.
-- Thanh điều hướng cố định phía dưới, hỗ trợ safe area iPhone và phím tắt laptop.
-- Script dọn bài quá hạn nhưng giữ bài đã lưu.
+- Có sẵn 9 nguồn RSS đã kiểm tra thực tế ngày 09/07/2026.
+- Tự thêm nguồn còn thiếu và quét tin khi người dùng vào giao diện lần đầu.
+- Toàn bộ câu giao tiếp trong ứng dụng dùng cách xưng hô **bạn**.
+- Có trang **Trợ giúp** tiếng Việt hướng dẫn tìm RSS, thêm nguồn, đặt từ khóa, đọc điểm và xử lý lỗi.
+- Có tooltip khi hover/focus ở các trường, nút thao tác và dấu `?`.
+- Sửa hoàn toàn lỗi npm lockfile trỏ vào registry nội bộ; Render dùng registry công khai.
+- Ghim Node bằng `.node-version` để tránh Render tự chọn phiên bản ngoài dự kiến.
+
+## 9 nguồn mặc định
+
+1. Báo Pháp Luật TP. Hồ Chí Minh — ưu tiên 8 — Pháp luật doanh nghiệp.
+2. Dân Trí - Trang chủ — ưu tiên 7.
+3. Thanh Niên - Trang chủ — ưu tiên 7.
+4. VnExpress - Thời sự — ưu tiên 7.
+5. Báo Giáo dục và Thời đại Online — ưu tiên 5.
+6. Báo Sài Gòn Giải Phóng — ưu tiên 5.
+7. VOV - Trang RSS — ưu tiên 5.
+8. Sức khỏe & Đời sống - Trang RSS — ưu tiên 5.
+9. Tuổi Trẻ Online - Tin mới nhất — ưu tiên 5.
+
+Hai tên nguồn được chuẩn hóa theo đúng tên miền: URL `vnexpress.net` hiển thị là **VnExpress**, URL `vov.vn` hiển thị là **VOV**.
+
+## Chức năng chính
+
+- Supabase Auth email/mật khẩu, lưu phiên đăng nhập.
+- Thêm, sửa, xóa, bật/tắt và kiểm tra RSS trước khi lưu.
+- Tìm RSS từ website.
+- Quét một nguồn, toàn bộ nguồn hoặc quét định kỳ bằng GitHub Actions.
+- RSS 2.0, Atom, RDF và nhiều kiểu ảnh RSS.
+- Chống SSRF, giới hạn redirect, timeout và kích thước phản hồi.
+- Lọc trùng bằng URL/GUID, tiêu đề chuẩn hóa, SimHash, Jaccard và character 3-gram.
+- Chấm điểm theo chuyên mục, từ khóa, nguồn, độ mới và chất lượng.
+- Tìm kiếm không dấu, lọc nguồn/chuyên mục/điểm/ngày/trạng thái.
+- Lưu, đã đọc, ẩn, tắt nguồn và chặn chủ đề.
+- Responsive cho laptop và iPhone, có safe-area và phím tắt.
 
 ## Kiến trúc
 
 ```text
-Trình duyệt React
+React/Vite trên Render
   ├─ Supabase Auth
   ├─ Supabase PostgREST + RLS
   └─ Supabase Edge Functions
        ├─ validate-feed
        ├─ discover-feed
        └─ scan-rss
-            └─ Website RSS bên ngoài
 
 GitHub Actions
-  ├─ Test + Build
-  ├─ Quét RSS định kỳ
-  └─ Dọn bài cũ hằng ngày
-
-Render Static Site
-  └─ dist/ của Vite
+  ├─ test-build
+  ├─ deploy-supabase-functions
+  ├─ scan-rss định kỳ
+  └─ cleanup-old-articles
 ```
 
-Không có backend Render riêng. Service role chỉ dùng trong Edge Function hoặc workflow dọn dữ liệu; frontend chỉ dùng publishable key.
+## Triển khai mới
 
-## Chạy local
-
-### Cách nhanh trên Windows
-
-1. Cài Node.js 22 LTS hoặc mới hơn.
-2. Nhấp đúp `run_local.bat`.
-3. Mở `.env.local`, điền hai biến Supabase.
-4. Chạy lại `run_local.bat`.
-
-### Dùng terminal
-
-```bash
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
-Mặc định Vite chạy tại `http://localhost:5173`.
-
-## Biến môi trường
-
-Frontend (`.env.local` và Render):
-
-```env
-VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
-```
-
-Supabase Edge Function secrets:
-
-```env
-CRON_SECRET=chuoi-ngau-nhien-dai-it-nhat-32-ky-tu
-```
-
-Các biến `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` được Supabase cung cấp cho Edge Functions. Không đưa service role vào frontend.
-
-GitHub repository secrets:
+1. Upload toàn bộ source lên GitHub.
+2. Chạy hai migration theo thứ tự:
 
 ```text
-SUPABASE_URL
-CRON_SECRET
-SUPABASE_SERVICE_ROLE_KEY   # chỉ workflow cleanup
+supabase/migrations/202607080001_initial.sql
+supabase/migrations/202607090001_verified_default_sources.sql
 ```
 
-## Tạo Supabase
-
-1. Tạo project mới, chọn region gần Việt Nam.
-2. Cài Supabase CLI và đăng nhập:
-
-```bash
-npm install -g supabase
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-```
-
-3. Chạy migration:
-
-```bash
-supabase db push
-```
-
-4. Deploy ba Edge Functions:
-
-```bash
-supabase functions deploy validate-feed
-supabase functions deploy discover-feed
-supabase functions deploy scan-rss
-```
-
-5. Tạo secret:
-
-```bash
-supabase secrets set CRON_SECRET="chuoi-ngau-nhien-dai-it-nhat-32-ky-tu"
-```
-
-6. Trong Authentication > URL Configuration, thêm URL local và URL Render vào Redirect URLs.
-
-## Tài khoản đầu tiên
-
-Phải chạy migration trước, sau đó mở website và chọn **Tạo tài khoản**. Trigger `handle_new_user` tự tạo profile, cài đặt, trọng số chuyên mục và từ khóa mẫu. Không có tài khoản quản trị hard-code.
-
-Nếu bật Confirm email trong Supabase Auth, người dùng phải bấm link xác nhận trước khi đăng nhập.
-
-## Deploy Render
-
-### Dùng Blueprint
-
-1. Push dự án lên GitHub.
-2. Trên Render chọn **New > Blueprint** và chọn repository.
-3. Render đọc `render.yaml`.
-4. Điền `VITE_SUPABASE_URL` và `VITE_SUPABASE_PUBLISHABLE_KEY`.
-5. Deploy.
-
-Cấu hình dùng:
+3. Deploy ba Edge Functions.
+4. Tạo `CRON_SECRET` trên Supabase và GitHub.
+5. Tạo Render Blueprint từ `render.yaml`.
+6. Điền:
 
 ```text
-Build command: npm ci && npm run build
-Publish directory: dist
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+```
+
+7. Cập nhật Supabase Authentication Site URL theo URL Render.
+
+## Cập nhật từ bản đang chạy
+
+Đọc `CAP_NHAT_TU_BAN_TRUOC.md`.
+
+## Render
+
+```text
+Node: 24.14.1
+Build command: npm run build
+Publish directory: ./dist
 Rewrite: /* -> /index.html
 ```
 
-Rewrite bắt buộc để React Router không lỗi 404 khi refresh trang con.
+Frontend chỉ dùng publishable key. Không đưa service-role key, secret key, access token hoặc CRON_SECRET vào Render.
 
-## GitHub Actions
-
-Tạo repository secrets như phần trên. Workflow `scan-rss.yml` gọi Edge Function bằng header `x-cron-secret` vào phút 17 và 47 mỗi giờ. `concurrency` ngăn hai lần quét chạy chồng.
-
-Nếu lịch không chạy:
-
-- Repository phải có workflow trên nhánh mặc định.
-- GitHub có thể trì hoãn workflow theo tải hệ thống.
-- Kiểm tra Actions có bị tắt do repository lâu không hoạt động.
-- Chạy `workflow_dispatch` thủ công để xác nhận secret và endpoint.
-- Xem lỗi HTTP trả về từ bước `curl`.
-
-## Thêm RSS
-
-1. Vào **Nguồn tin**.
-2. Dán URL RSS hoặc URL website.
-3. Bấm **Kiểm tra RSS** hoặc **Tìm RSS từ website**.
-4. Chỉ khi kết quả hợp lệ mới bấm **Lưu nguồn**.
-5. Bấm **Quét ngay**.
-
-Danh mục nguồn gợi ý chỉ là điểm khởi đầu. Vì URL báo chí có thể thay đổi, mọi nguồn đều được kiểm tra runtime trước khi thêm; không tự kích hoạt URL chưa xác minh.
-
-## Thuật toán lọc trùng
-
-1. Trùng tuyệt đối: GUID cùng nguồn, canonical URL, URL hash hoặc normalized title trong 7 ngày.
-2. Ứng viên gần: bài trong 72 giờ.
-3. SimHash 64-bit: Hamming Distance ≤ 3.
-4. Jaccard token tiêu đề: ≥ 0,82, tối thiểu 5 token có nghĩa.
-5. Character 3-gram cosine: ngưỡng 0,92 trong cùng ngày.
-6. Không kết luận chỉ từ các từ chung như “thuế”, “doanh nghiệp”, “tai nạn”.
-7. Bản trùng không bị xóa; trường `duplicate_of` trỏ về bài đại diện.
-
-Chi tiết tại `KIEN_TRUC_VA_THUAT_TOAN.md`.
-
-## Chấm điểm
-
-```text
-Điểm = chuyên mục + từ khóa tích cực + nguồn + độ mới + chất lượng - từ khóa tiêu cực
-```
-
-- Chuyên mục tối đa 25.
-- Từ khóa tích cực tối đa 30.
-- Nguồn tối đa 15.
-- Độ mới tối đa 20, suy giảm mũ theo half-life.
-- Chất lượng tối đa 10.
-- Từ khóa âm trọng số 100 được xem là chặn tuyệt đối.
-
-Thay đổi trọng số trong trang **Sở thích**. Tin đã lưu không bị script dọn tự động xóa.
-
-## Kiểm thử và build
+## Kiểm thử
 
 ```bash
-npm test
+npm ci
 npm run typecheck
+npm test
 npm run build
 ```
 
-Kết quả tại thời điểm đóng gói: 7 test files, 31 tests đều đạt; TypeScript strict và Vite production build đạt.
+Kết quả bản đóng gói cuối: 8 test files, 35 test cases đạt; TypeScript typecheck và Vite production build đạt.
 
-## Giới hạn hiện tại
+## Bảo mật và giới hạn
 
-- Một số báo chặn bot, Cloudflare hoặc yêu cầu cookie; hệ thống sẽ báo lỗi thay vì vượt cơ chế bảo vệ.
-- Feed có XML sai nghiêm trọng hoặc encoding rất hiếm có thể không đọc được.
-- Dò feed chỉ đọc HTML tĩnh; không chạy JavaScript website.
-- Lọc trùng dựa trên tiêu đề/mô tả RSS nên có thể bỏ sót khi hai báo viết tiêu đề quá khác nhau.
-- Việc đổi bài đại diện gồm nhiều truy vấn, không phải một transaction PostgreSQL duy nhất; chạy chồng đã được giảm bằng GitHub concurrency và unique index.
-- Gói miễn phí Supabase/Render/GitHub có quota và có thể sleep hoặc trì hoãn.
-- Ảnh được tải trực tiếp từ báo; báo có thể chặn hotlink hoặc đổi URL.
-
-## Bảo mật
-
-- RLS bật cho toàn bộ dữ liệu người dùng.
-- Không có service role trong bundle frontend.
-- URL nhập vào được chặn localhost, private IP, metadata endpoint và credential trong URL.
-- Redirect được kiểm tra lại từng bước.
-- Không render HTML RSS; mô tả được strip/sanitize thành text.
+- RLS bảo vệ dữ liệu từng tài khoản.
+- Edge Functions tự xác thực JWT hoặc `x-cron-secret`.
 - Không lưu toàn văn bài báo.
-
-## Giấy phép và nội dung báo chí
-
-Source code có thể dùng nội bộ. Nội dung, ảnh và nhãn hiệu của báo thuộc chủ sở hữu tương ứng. Ứng dụng chỉ lưu dữ liệu được feed cung cấp và mở bài đầy đủ trên website gốc.
+- Một số báo có thể đổi URL, chặn bot hoặc giới hạn tần suất.
+- Dữ liệu RSS và hình ảnh thuộc website nguồn.

@@ -1,45 +1,42 @@
-# KẾT QUẢ KIỂM THỬ
+# KẾT QUẢ KIỂM THỬ BẢN CUỐI
 
-Thời điểm đóng gói: 08/07/2026, múi giờ Asia/Ho_Chi_Minh.
+Thời điểm đóng gói: 09/07/2026, múi giờ Asia/Ho_Chi_Minh.
 
-## Các lệnh đã chạy thành công
+## Lệnh đã chạy thành công
 
 ```bash
+npm ci --no-audit --no-fund
 npm run typecheck
 npm test
 npm run build
-npx -y deno@latest check \
-  supabase/functions/validate-feed/index.ts \
-  supabase/functions/discover-feed/index.ts \
-  supabase/functions/scan-rss/index.ts
 ```
 
 ## Kết quả
 
-- TypeScript strict typecheck: đạt.
-- Vitest: 7/7 test files đạt, 31/31 test cases đạt.
+- TypeScript typecheck: đạt.
+- Vitest: 8/8 file kiểm thử đạt.
+- Tổng số test: 35/35 đạt.
 - Vite production build: đạt.
-- Kiểm tra kiểu Deno cho cả 3 Edge Function: đạt.
-- Bundle frontend không chứa `SUPABASE_SERVICE_ROLE_KEY` hoặc chuỗi `service_role`.
-- Mã thực thi không chứa OpenAI, Gemini, Claude, Anthropic, embedding hoặc LLM.
-- Không phát hiện khóa bí mật thật bị hard-code trong source, workflow hoặc bundle.
+- Kiểm tra 9 nguồn mặc định: đủ 9, URL HTTPS duy nhất, đang bật, ưu tiên hợp lệ và tên khớp tên miền.
+- Không còn URL `packages.applied-caas-gateway1.internal.api.openai.org` trong source hoặc lockfile.
+- `package-lock.json` sử dụng `https://registry.npmjs.org/`.
+- Không còn câu giao diện “Tin dành cho anh”; trang chính dùng “Tin dành cho bạn”.
+- Bundle production tạo thành công với trang Trợ giúp, tooltip và bootstrap nguồn mặc định.
 
 ## Phạm vi unit test
 
-- Chuẩn hóa URL và xóa tracking parameter.
-- Chuẩn hóa tiêu đề tiếng Việt, tìm kiếm không dấu và sanitize HTML.
-- Jaccard, character 3-gram cosine, SimHash 64-bit và Hamming Distance.
-- Quyết định tin trùng và chọn bài đại diện.
-- Điểm chuyên mục, từ khóa, nguồn, độ mới và chất lượng.
-- Trích xuất ảnh từ các trường RSS.
-- Chặn URL localhost, loopback, private IP và metadata endpoint dạng literal.
+- Chuẩn hóa URL và tracking parameter.
+- Chuẩn hóa tiếng Việt và sanitize HTML.
+- SimHash, Jaccard, cosine 3-gram và quyết định trùng.
+- Chấm điểm và chọn bài đại diện.
+- Trích xuất ảnh RSS.
+- Chặn SSRF.
+- Danh sách nguồn mặc định.
 
-## Phần phải nghiệm thu sau khi triển khai thật
+## Phần cần nghiệm thu trên hạ tầng thật
 
-- Kết nối project Supabase và chạy migration trên hạ tầng thật.
-- Deploy, cấu hình secrets và gọi Edge Functions từ Supabase/GitHub Actions.
-- Khả năng phản hồi của từng RSS tại thời điểm triển khai; một số báo có thể đổi URL hoặc chặn bot.
-- Kiểm thử trực tiếp trên iPhone 14 Pro Max và các trình duyệt mục tiêu.
-- Kiểm thử tải với số nguồn/bài thực tế và tinh chỉnh ngưỡng lọc trùng.
-
-Thực hiện checklist trong `HUONG_DAN_TRIEN_KHAI.md` trước khi đưa vào sử dụng chính thức.
+- Chạy migration mới trên Supabase.
+- Render build từ commit mới và mở đúng URL production.
+- Quét thực tế 9 RSS tại thời điểm triển khai.
+- Kiểm tra tooltip bằng chuột và focus bàn phím.
+- Kiểm tra giao diện Trợ giúp trên iPhone 14 Pro Max.

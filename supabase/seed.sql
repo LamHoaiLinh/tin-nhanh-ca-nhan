@@ -1,3 +1,3 @@
--- Dữ liệu mặc định cho từng người dùng được tạo tự động bởi trigger public.handle_new_user.
--- Danh mục nguồn RSS gợi ý được seed trong migration. Không nguồn nào tự động kích hoạt
--- nếu chưa vượt qua chức năng validate-feed tại thời điểm người dùng thêm.
+-- Dữ liệu hồ sơ, cài đặt, từ khóa và chuyên mục được tạo bởi trigger public.handle_new_user.
+-- Migration 202607090001_verified_default_sources.sql bổ sung 9 nguồn RSS đã kiểm tra,
+-- bật sẵn cho tài khoản hiện có và tài khoản tạo mới, không tạo bản trùng.

@@ -1,0 +1,27 @@
+name: Cleanup Old Articles
+on:
+  schedule:
+    - cron: "23 19 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cleanup-old-articles
+  cancel-in-progress: false
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Delete expired unsaved articles
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONFIRM_CLEANUP: "true"
+        run: npx tsx scripts/cleanup-old-articles.ts
