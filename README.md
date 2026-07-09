@@ -127,3 +127,12 @@ Mỗi thẻ tin có nút `Sao chép link` và `Tóm tắt`. Tiêu đề, hình v
 6. Chỉ dùng mô tả RSS khi toàn bộ các tầng trên thất bại.
 
 Mỗi trang bị giới hạn redirect, timeout, kích thước 6 MB, kiểm tra DNS/SSRF và tổng thời gian xử lý khoảng 28 giây. Thuật toán sau đó chọn các câu quan trọng và tạo bản tóm tắt khoảng 25–35%; cách nối câu, bố cục và tỷ lệ được xử lý tự động. Giao diện đọc có ba cỡ chữ, cuộn nội dung, chuyển bài trước/bài tiếp theo và lưu tạm kết quả trong phiên. Không dùng API AI trả phí và không lưu toàn văn bài báo.
+
+## Quản lý dung lượng database
+Chạy migration `202607090002_storage_cleanup_and_newest.sql` để bổ sung:
+- thời gian lưu nhật ký quét;
+- giới hạn database dùng cho cảnh báo;
+- hàm đo dung lượng PostgreSQL;
+- mặc định xếp tin theo thời gian đăng mới nhất.
+
+Workflow `Cleanup Old Articles` chạy hằng ngày, xóa bài cũ chưa lưu, xóa `scan_logs` quá hạn và cảnh báo khi database đạt 70% hoặc 80% giới hạn cấu hình.

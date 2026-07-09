@@ -20,7 +20,7 @@ export interface KeywordRule {
 }
 export interface CategoryPreference { id: string; user_id: string; category: string; weight: number; enabled: boolean; }
 export interface UserSettings {
-  user_id: string; scan_interval_minutes: number; article_retention_days: number; page_size: number; duplicate_threshold: number;
+  user_id: string; scan_interval_minutes: number; article_retention_days: number; scan_log_retention_days: number; database_limit_mb: number; page_size: number; duplicate_threshold: number;
   default_sort: 'relevance' | 'newest'; show_hidden: boolean; image_fallback_mode: 'logo' | 'category';
 }
 export interface ArticleFilters {

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { StartupBootstrap } from './StartupBootstrap';
+import { StorageWarningBanner } from './StorageWarningBanner';
 
 export function AppShell() {
   const { user, signOut } = useAuth();
@@ -24,6 +25,7 @@ export function AppShell() {
         </div>
       </header>
       <StartupBootstrap />
+      <StorageWarningBanner />
       <main className="main-content"><Outlet /></main>
     </div>
   );

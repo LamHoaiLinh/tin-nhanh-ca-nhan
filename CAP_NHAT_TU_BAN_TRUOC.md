@@ -87,3 +87,11 @@ Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `su
 - Nhấp vào hình sẽ mở bài báo gốc trong tab mới.
 - Nếu máy chủ ảnh từ chối tải hoặc URL ảnh hỏng, khu vực hình tự ẩn để không làm gián đoạn việc đọc.
 - Giao diện ảnh tự co giãn theo desktop và điện thoại.
+
+## Cập nhật quản lý dung lượng và thứ tự tin
+- Tự động xóa `scan_logs` theo số ngày cấu hình, mặc định 30 ngày.
+- Workflow dọn dữ liệu kiểm tra dung lượng database sau mỗi lần chạy và tạo cảnh báo GitHub Actions từ 70%/80%.
+- Giao diện có cảnh báo dung lượng và đồng hồ sử dụng trong trang Cài đặt.
+- Có thể đặt giới hạn database theo gói Supabase đang dùng; mặc định 500 MB.
+- Danh sách tin luôn xếp theo thời gian đăng mới nhất sau khi đã qua bộ lọc cá nhân hóa.
+- Migration cần chạy: `supabase/migrations/202607090002_storage_cleanup_and_newest.sql`.

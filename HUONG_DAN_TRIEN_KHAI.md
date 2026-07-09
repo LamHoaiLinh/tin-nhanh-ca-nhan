@@ -103,3 +103,12 @@ Manual Deploy > Clear build cache & deploy
 ```
 
 Log đúng phải tải package từ `https://registry.npmjs.org/`.
+
+## Cập nhật quản lý dung lượng
+Sau khi upload phiên bản này, chạy thêm migration:
+
+`supabase/migrations/202607090002_storage_cleanup_and_newest.sql`
+
+Migration bổ sung thời gian giữ `scan_logs`, giới hạn database dùng cho cảnh báo, hàm đọc dung lượng PostgreSQL và đặt thứ tự tin mặc định là mới nhất.
+
+Sau đó vào GitHub Actions chạy thủ công `Cleanup Old Articles` một lần để xác nhận bài cũ, nhật ký quét và cảnh báo dung lượng hoạt động. Workflow cần `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY`.

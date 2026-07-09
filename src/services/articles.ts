@@ -12,7 +12,7 @@ export async function fetchArticles(filters: ArticleFilters): Promise<{ items: A
   if (filters.minScore > 0) query = query.gte('relevance_score', filters.minScore);
   if (filters.fromDate) query = query.gte('published_at', `${filters.fromDate}T00:00:00`);
   if (filters.toDate) query = query.lte('published_at', `${filters.toDate}T23:59:59`);
-  query = filters.sort === 'newest' ? query.order('published_at', { ascending: false }) : query.order('relevance_score', { ascending: false }).order('published_at', { ascending: false });
+  query = query.order('published_at', { ascending: false }).order('fetched_at', { ascending: false });
   const from = (filters.page - 1) * filters.pageSize;
   const { data, error, count } = await query.range(from, from + filters.pageSize - 1);
   if (error) throw error;

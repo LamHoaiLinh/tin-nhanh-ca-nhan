@@ -17,7 +17,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { ArticleFilters } from '../types/domain';
 import { errorMessage } from '../utils/error';
 
-const INITIAL: ArticleFilters = { search: '', sort: 'relevance', state: 'all', category: '', sourceId: '', minScore: 0, fromDate: '', toDate: '', page: 1, pageSize: 20 };
+const INITIAL: ArticleFilters = { search: '', sort: 'newest', state: 'all', category: '', sourceId: '', minScore: 0, fromDate: '', toDate: '', page: 1, pageSize: 20 };
 
 export function ArticlesPage() {
   const { user } = useAuth();
@@ -63,7 +63,7 @@ export function ArticlesPage() {
     <>
       <section className="page-heading">
         <div>
-          <h1>Tin dành cho bạn <HelpTip text="Danh sách được xếp theo từ khóa, chuyên mục, độ ưu tiên nguồn, độ mới và chất lượng dữ liệu." /></h1>
+          <h1>Tin dành cho bạn <HelpTip text="Danh sách đã được lọc theo sở thích và luôn xếp bài đăng mới nhất lên trước." /></h1>
           <p>{articles.data?.count ?? 0} bài phù hợp với bộ lọc hiện tại</p>
         </div>
         <div className="heading-actions">
@@ -75,10 +75,6 @@ export function ArticlesPage() {
 
       <section className="search-toolbar">
         <input title="Tìm trong tiêu đề và mô tả, không phân biệt dấu tiếng Việt" aria-label="Tìm kiếm" placeholder="Tìm không phân biệt dấu theo tiêu đề hoặc mô tả…" value={filters.search} onChange={(event) => change({ search: event.target.value, page: 1 })} />
-        <select title="Chọn ưu tiên điểm phù hợp hoặc thời gian đăng" value={filters.sort} onChange={(event) => change({ sort: event.target.value as ArticleFilters['sort'], page: 1 })}>
-          <option value="relevance">Phù hợp nhất</option>
-          <option value="newest">Mới nhất</option>
-        </select>
         <select title="Chọn số bài hiển thị trên mỗi trang" value={filters.pageSize} onChange={(event) => change({ pageSize: Number(event.target.value), page: 1 })}>
           {[10, 20, 30, 50].map((value) => <option value={value} key={value}>{value} bài/trang</option>)}
         </select>

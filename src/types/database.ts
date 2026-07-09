@@ -14,7 +14,7 @@ export interface Database {
     Views: {
       article_feed: { Row: import('./domain').ArticleFeedItem; Relationships: [] };
     };
-    Functions: Record<string, never>;
+    Functions: { get_database_storage_bytes: { Args: Record<PropertyKey, never>; Returns: number } };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

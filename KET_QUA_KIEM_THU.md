@@ -46,3 +46,10 @@ npx -y deno@2.5.6 check --config supabase/functions/summarize-article/deno.json 
 - Quét thực tế 9 RSS tại thời điểm triển khai.
 - Kiểm tra tooltip bằng chuột và focus bàn phím.
 - Kiểm tra giao diện Trợ giúp trên iPhone 14 Pro Max.
+
+## Bổ sung quản lý dung lượng
+- TypeScript typecheck: đạt.
+- Vitest: 10/10 file, 44/44 test đạt.
+- Production build: đạt.
+- Kiểm thử mới: phân mức cảnh báo 70%/80% và định dạng dung lượng.
+- Danh sách bài đã chuyển sang sắp xếp cố định theo `published_at DESC`.
