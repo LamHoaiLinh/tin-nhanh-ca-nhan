@@ -9,7 +9,7 @@
 - Toàn bộ câu giao tiếp trong ứng dụng dùng cách xưng hô **bạn**.
 - Có trang **Trợ giúp** tiếng Việt hướng dẫn tìm RSS, thêm nguồn, đặt từ khóa, đọc điểm và xử lý lỗi.
 - Có tooltip khi hover/focus ở các trường, nút thao tác và dấu `?`.
-- Có nút **Sao chép link** và **Tóm tắt** ngay trong ứng dụng; thuật toán giữ nguyên câu chữ cốt lõi, ưu tiên số liệu, lập luận và góc nhìn đối chiếu.
+- Có nút **Sao chép link** và **Tóm tắt** ngay trong ứng dụng; hệ thống ưu tiên lấy toàn văn từ bài gốc bằng JSON-LD, Mozilla Readability, selector báo Việt Nam và bản AMP/mobile trước khi dùng RSS dự phòng.
 - Sửa hoàn toàn lỗi npm lockfile trỏ vào registry nội bộ; Render dùng registry công khai.
 - Ghim Node bằng `.node-version` để tránh Render tự chọn phiên bản ngoài dự kiến.
 
@@ -106,7 +106,7 @@ npm test
 npm run build
 ```
 
-Kết quả bản đóng gói cuối: 9 test files, 39 test cases đạt; TypeScript typecheck và Vite production build đạt.
+Kết quả bản đóng gói cuối: 9 test files, 42 test cases đạt; TypeScript, Vite production build và Deno typecheck cho Edge Function tóm tắt đều đạt.
 
 ## Bảo mật và giới hạn
 
@@ -117,4 +117,13 @@ Kết quả bản đóng gói cuối: 9 test files, 39 test cases đạt; TypeSc
 - Dữ liệu RSS và hình ảnh thuộc website nguồn.
 
 ### Tóm tắt bài báo
-Mỗi thẻ tin có nút `Sao chép link` và `Tóm tắt`. Tiêu đề, hình và nút `Đọc bài gốc` mở trực tiếp website của báo. Nút `Tóm tắt` gọi Edge Function `summarize-article`, lấy phần nội dung công khai của bài, trích xuất đoạn chính và tạo bản tóm tắt khoảng 25–35% bằng thuật toán chọn câu. Cách nối câu, bố cục và tỷ lệ được xử lý tự động. Giao diện đọc có ba cỡ chữ, cuộn nội dung, chuyển bài trước/bài tiếp theo và lưu tạm kết quả trong phiên. Nếu chưa lấy được toàn văn, hệ thống tự dùng mô tả RSS thay vì dừng ở lỗi kỹ thuật. Không dùng API AI trả phí và không lưu toàn văn bài báo.
+Mỗi thẻ tin có nút `Sao chép link` và `Tóm tắt`. Tiêu đề, hình và nút `Đọc bài gốc` mở trực tiếp website của báo. Edge Function `summarize-article` thực hiện quy trình nhiều tầng:
+
+1. Tải trực tiếp URL bài gốc bằng hồ sơ trình duyệt desktop; tự thử lại bằng hồ sơ mobile khi website chặn hoặc phản hồi lỗi tạm thời.
+2. Ưu tiên `articleBody` trong JSON-LD nếu đủ dài.
+3. Phân tích DOM bằng Mozilla Readability, cùng công nghệ lõi của Firefox Reader View.
+4. Thử các selector nội dung phổ biến của báo Việt Nam và bộ trích xuất HTML dự phòng.
+5. Phát hiện `rel=amphtml`, liên kết mobile; nếu không có thì thử một số URL AMP/mobile bảo thủ, cùng tên miền.
+6. Chỉ dùng mô tả RSS khi toàn bộ các tầng trên thất bại.
+
+Mỗi trang bị giới hạn redirect, timeout, kích thước 6 MB, kiểm tra DNS/SSRF và tổng thời gian xử lý khoảng 28 giây. Thuật toán sau đó chọn các câu quan trọng và tạo bản tóm tắt khoảng 25–35%; cách nối câu, bố cục và tỷ lệ được xử lý tự động. Giao diện đọc có ba cỡ chữ, cuộn nội dung, chuyển bài trước/bài tiếp theo và lưu tạm kết quả trong phiên. Không dùng API AI trả phí và không lưu toàn văn bài báo.

@@ -161,6 +161,9 @@ export function ArticleSummaryModal({ articles, currentIndex, onClose, onNavigat
           ) : result ? (
             <article className="summary-content" aria-live="polite">
               {statusText && <div className="summary-source-status">{statusText}</div>}
+              {result.warning && result.extractionMethod === 'rss-description' && (
+                <p className="summary-source-note">{result.warning}</p>
+              )}
               {result.paragraphs.map((paragraph, index) => (
                 <p key={`${article.id}-${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
               ))}

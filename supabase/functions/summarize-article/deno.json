@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "@mozilla/readability": "npm:@mozilla/readability@0.6.0",
+    "linkedom/worker": "npm:linkedom@0.18.13/worker"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "dom", "dom.iterable", "esnext"]
+  }
+}

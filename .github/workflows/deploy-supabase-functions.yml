@@ -31,6 +31,13 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing SUPABASE_ACCESS_TOKEN" && exit 1)
           test -n "$SUPABASE_PROJECT_ID" || (echo "Missing SUPABASE_PROJECT_ID" && exit 1)
 
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.5.6
+
+      - name: Check summarize Edge Function
+        run: deno check --config supabase/functions/summarize-article/deno.json supabase/functions/summarize-article/index.ts
+
       - name: Deploy core Edge Functions
         run: |
           supabase functions deploy validate-feed --project-ref "$SUPABASE_PROJECT_ID"

@@ -1,7 +1,9 @@
+export type ExtractionMethod = 'json-ld' | 'readability' | 'site-selector' | 'article' | 'main' | 'paragraphs' | 'amp-readability' | 'amp-site-selector' | 'mobile-readability' | 'mobile-site-selector' | 'rss-description';
+
 export interface ExtractedArticle {
   text: string;
   paragraphs: string[];
-  method: 'json-ld' | 'article' | 'main' | 'paragraphs' | 'rss-description';
+  method: ExtractionMethod;
 }
 
 export interface SummaryResult {

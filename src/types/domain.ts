@@ -30,7 +30,9 @@ export interface ArticleFilters {
 
 export interface ArticleSummary {
   articleId: string; title: string; sourceName: string; originalUrl: string;
-  extractionMethod: 'json-ld' | 'article' | 'main' | 'paragraphs' | 'rss-description';
+  extractionMethod: 'json-ld' | 'readability' | 'site-selector' | 'article' | 'main' | 'paragraphs' | 'amp-readability' | 'amp-site-selector' | 'mobile-readability' | 'mobile-site-selector' | 'rss-description';
+  extractionVariant?: 'original' | 'discovered-amp-mobile' | 'heuristic-amp-mobile' | 'rss-description';
+  extractionAttempts?: Array<{ variant: string; ok: boolean; status: number | null; method: string | null; wordCount: number | null; message: string }>;
   warning: string | null; paragraphs: string[]; originalWordCount: number; summaryWordCount: number;
   compressionRatio: number; selectedSentenceCount: number;
 }

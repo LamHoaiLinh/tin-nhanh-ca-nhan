@@ -42,3 +42,39 @@ describe('trích xuất và tóm tắt bài báo', () => {
     expect(first.selectedSentenceCount).toBe(second.selectedSentenceCount);
   });
 });
+
+import { buildHeuristicAlternativeUrls, discoverAlternativeArticleUrls, extractBestArticleFromHtml } from '../supabase/functions/_shared/article-extractor';
+
+describe('trích xuất toàn văn nhiều tầng', () => {
+  it('dùng Mozilla Readability khi trang không có articleBody', () => {
+    const body = paragraphs.concat([
+      'Việc triển khai còn phụ thuộc nguồn lực ngân sách, khả năng phối hợp giữa các đơn vị và chất lượng dữ liệu theo dõi sau khi chính sách có hiệu lực.',
+      'Cơ quan quản lý cho biết kết quả thí điểm sẽ được công khai để người dân và doanh nghiệp cùng giám sát trong thời gian tới.',
+    ]);
+    const html = `<!doctype html><html><head><title>Điều chỉnh giao thông</title></head><body><nav>${'Menu '.repeat(40)}</nav><div class="page"><article><h1>Điều chỉnh giao thông trung tâm</h1>${body.map((p) => `<p>${p}</p>`).join('')}</article></div><aside>${'Tin liên quan '.repeat(80)}</aside></body></html>`;
+    const extracted = extractBestArticleFromHtml(html, 'https://example.com/bai-viet', 'Điều chỉnh giao thông trung tâm', 'Mô tả RSS rất ngắn.');
+    expect(extracted.article).not.toBeNull();
+    expect(extracted.method).toBe('readability');
+    expect(extracted.article?.text).toContain('lượng phương tiện');
+    expect(extracted.article?.text).not.toContain('Tin liên quan Tin liên quan');
+  });
+
+  it('dùng selector báo Việt Nam khi Readability không đạt ngưỡng', () => {
+    const html = `<html><body><div class="detail-content">${paragraphs.map((p) => `<p>${p}</p>`).join('')}</div><div class="related-news"><p>${'Tin liên quan không thuộc thân bài. '.repeat(20)}</p></div></body></html>`;
+    const extracted = extractBestArticleFromHtml(html, 'https://example.com/tin', 'Điều chỉnh giao thông trung tâm', 'Mô tả RSS ngắn.');
+    expect(extracted.article).not.toBeNull();
+    expect(['readability', 'site-selector']).toContain(extracted.method);
+    expect(extracted.article?.paragraphs.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('phát hiện link AMP/mobile và tạo phương án dự phòng hợp lệ', () => {
+    const html = `<html><head><link rel="amphtml" href="/amp/bai-viet"><link rel="alternate" media="only screen and (max-width: 640px)" href="https://m.example.com/bai-viet"></head></html>`;
+    const discovered = discoverAlternativeArticleUrls(html, 'https://www.example.com/bai-viet');
+    expect(discovered).toContain('https://www.example.com/amp/bai-viet');
+    expect(discovered).toContain('https://m.example.com/bai-viet');
+
+    const heuristics = buildHeuristicAlternativeUrls('https://www.example.com/bai-viet');
+    expect(heuristics.some((url) => url.includes('/amp/bai-viet'))).toBe(true);
+    expect(heuristics.some((url) => url.includes('amp=1'))).toBe(true);
+  });
+});

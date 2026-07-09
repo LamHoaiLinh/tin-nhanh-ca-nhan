@@ -98,3 +98,10 @@ tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
 vite.config.ts
+
+
+NANG CAP TOM TAT:
+  supabase/functions/_shared/article-extractor.ts
+  supabase/functions/_shared/article-source.ts
+  supabase/functions/summarize-article/deno.json
+  supabase/functions/summarize-article/deno.lock

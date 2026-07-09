@@ -22,10 +22,12 @@
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
+    "@mozilla/readability": "0.6.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^6.0.3",
+    "linkedom": "0.18.13",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "vite": "^8.1.3",

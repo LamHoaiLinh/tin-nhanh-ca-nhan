@@ -31,13 +31,13 @@ Frontend cũng có cơ chế đồng bộ 9 nguồn mặc định khi người d
 
 ## 3. Edge Functions
 
-Bản này thêm Edge Function mới:
+Bản này sử dụng Edge Function:
 
 ```text
 summarize-article
 ```
 
-Sau khi upload GitHub, bắt buộc chạy lại workflow **Deploy Supabase Edge Functions** để đưa function mới lên Supabase. Không cần chạy migration SQL mới cho tính năng tóm tắt.
+Sau khi upload GitHub, bắt buộc chạy lại workflow **Deploy Supabase Edge Functions** để cập nhật phiên bản trích xuất toàn văn nhiều tầng lên Supabase. Workflow sẽ kiểm tra Deno trước khi deploy. Không cần chạy migration SQL mới.
 
 ## 4. Kiểm tra sau cập nhật
 
@@ -58,3 +58,25 @@ Sau khi upload GitHub, bắt buộc chạy lại workflow **Deploy Supabase Edge
 - Kết quả đã tóm tắt được giữ tạm trong bộ nhớ phiên để quay lại bài trước nhanh hơn.
 - Khi Edge Function hoặc website nguồn tạm lỗi, giao diện tự dùng mô tả RSS thay vì hiện lỗi kỹ thuật.
 - Workflow deploy nay triển khai riêng từng Edge Function và kiểm tra chắc chắn có `summarize-article`.
+
+
+## Nâng cấp lấy toàn văn ổn định
+
+Phiên bản này thay bộ lấy bài đơn giản bằng quy trình:
+
+```text
+URL gốc
+→ tải bằng desktop/mobile User-Agent và theo redirect an toàn
+→ JSON-LD articleBody
+→ Mozilla Readability + LinkeDOM
+→ selector báo Việt Nam + bộ trích xuất HTML dự phòng
+→ rel=amphtml / mobile / URL AMP bảo thủ
+→ RSS chỉ là phương án cuối
+```
+
+Sau khi cập nhật, cần thực hiện đủ hai việc:
+
+1. **GitHub > Actions > Deploy Supabase Edge Functions > Run workflow** để cập nhật `summarize-article`.
+2. Chờ Render deploy commit mới; khi cần dùng **Manual Deploy > Clear build cache & deploy**.
+
+Không chạy migration SQL. Trong Supabase Edge Functions, deployment của `summarize-article` phải có thời gian cập nhật mới hơn commit này.

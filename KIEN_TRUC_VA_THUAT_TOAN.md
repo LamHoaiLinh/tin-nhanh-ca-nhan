@@ -115,3 +115,13 @@ Thuật toán là extractive: giữ nguyên phần lớn câu gốc để hạn 
 - Một số báo chặn bot, yêu cầu JavaScript hoặc trả trang quá lớn; khi đó hệ thống dùng mô tả RSS và hiển thị cảnh báo.
 - Tóm tắt extractive có thể kém tự nhiên hơn mô hình ngôn ngữ, nhưng chi phí bằng 0 và khả năng kiểm chứng cao hơn.
 - Các bài pháp luật, y tế, tài chính hoặc có số liệu quan trọng vẫn cần đối chiếu nguồn gốc.
+
+
+## Trích xuất toàn văn cho tóm tắt
+
+Edge Function `summarize-article` tách việc tải trang và phân tích nội dung thành hai lớp:
+
+- `_shared/article-source.ts`: tải HTTP an toàn, retry desktop/mobile, redirect, encoding, giới hạn dung lượng và tổng thời gian; tìm và thử URL AMP/mobile.
+- `_shared/article-extractor.ts`: JSON-LD, Mozilla Readability trên LinkeDOM, selector báo Việt Nam, chấm chất lượng nội dung và loại đoạn nhiễu.
+
+Tiêu chí nhận toàn văn không chỉ dựa vào số ký tự: hệ thống kết hợp số từ, số đoạn, độ phủ từ khóa tiêu đề và độ dài tương đối so với mô tả RSS. Việc này giảm hai lỗi phổ biến: lấy nhầm cột tin liên quan và coi sapo ngắn là toàn văn.
