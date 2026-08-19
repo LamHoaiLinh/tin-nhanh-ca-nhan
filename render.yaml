@@ -7,9 +7,9 @@ services:
     pullRequestPreviewsEnabled: true
     envVars:
       - key: VITE_SUPABASE_URL
-        sync: false
+        value: https://qjpcxhackvoewcxlatis.supabase.co
       - key: VITE_SUPABASE_PUBLISHABLE_KEY
-        sync: false
+        value: sb_publishable_TArSkv7lbokFpK9KZxp5Iw_iJ7f29wh
     routes:
       - type: rewrite
         source: /*

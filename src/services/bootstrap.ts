@@ -12,6 +12,9 @@ export interface DefaultSourceBootstrapResult {
  * chuyên mục, mức ưu tiên, website cùng trạng thái bật của các URL đã xác nhận.
  */
 export async function ensureDefaultSources(userId: string): Promise<DefaultSourceBootstrapResult> {
+  const { error: defaultsError } = await supabase.rpc('ensure_news_user_defaults');
+  if (defaultsError) throw defaultsError;
+
   const urls = DEFAULT_SOURCES.map((source) => source.feed_url);
   const { data: existingRows, error: selectError } = await supabase
     .from('sources')

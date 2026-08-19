@@ -1,12 +1,39 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.109.0';
+
 export interface Caller { mode: 'cron' | 'user'; userId?: string; admin: SupabaseClient; }
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < left.length; index += 1) mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  return mismatch === 0;
+}
+
 export async function authenticate(req: Request): Promise<Caller> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRole) throw new Error('Thiếu cấu hình Supabase server.');
-  const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false, autoRefreshToken: false } });
-  const cronSecret = Deno.env.get('CRON_SECRET');
-  if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) return { mode: 'cron', admin };
+
+  const admin = createClient(supabaseUrl, serviceRole, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const suppliedCronSecret = req.headers.get('x-cron-secret') ?? '';
+  if (suppliedCronSecret) {
+    let expectedCronSecret = Deno.env.get('CRON_SECRET') ?? '';
+    if (!expectedCronSecret) {
+      const { data, error } = await admin
+        .from('news_runtime_config')
+        .select('cron_secret')
+        .eq('id', true)
+        .maybeSingle();
+      if (!error) expectedCronSecret = data?.cron_secret ?? '';
+    }
+    if (expectedCronSecret && constantTimeEqual(suppliedCronSecret, expectedCronSecret)) {
+      return { mode: 'cron', admin };
+    }
+  }
+
   const authHeader = req.headers.get('authorization') ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) throw new Error('Yêu cầu đăng nhập.');

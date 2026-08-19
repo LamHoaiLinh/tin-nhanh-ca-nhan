@@ -1,27 +1,13 @@
-name: Cleanup Old Articles
+name: Cleanup Old Articles (managed by Supabase Cron)
+
 on:
-  schedule:
-    - cron: "23 19 * * *"
   workflow_dispatch:
+
 permissions:
   contents: read
-concurrency:
-  group: cleanup-old-articles
-  cancel-in-progress: false
+
 jobs:
-  cleanup:
+  notice:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Delete expired articles, scan logs and check storage
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          CONFIRM_CLEANUP: "true"
-        run: npx tsx scripts/cleanup-old-articles.ts
+      - run: echo "Automatic cleanup now runs inside Supabase and keeps news for 3 days."

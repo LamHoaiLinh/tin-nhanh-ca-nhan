@@ -59,20 +59,20 @@ export function SettingsPage() {
           </select>
         </label>
         <label>
-          <span className="label-with-tip">Giữ bài trong bao nhiêu ngày <HelpTip text="Bài cũ chưa lưu sẽ được dọn theo thời hạn này để giảm dữ liệu." /></span>
-          <input type="number" min="7" max="365" value={settings.article_retention_days} onChange={(event) => setSettings({ ...settings, article_retention_days: Number(event.target.value) })} />
+          <span className="label-with-tip">Thời gian giữ bài <HelpTip text="Mọi bài tin, kể cả bài đã lưu, được xóa sau tối đa 3 ngày để tiết kiệm dung lượng." /></span>
+          <input type="number" value={3} disabled aria-label="Giữ bài 3 ngày" />
         </label>
         <label>
-          <span className="label-with-tip">Giữ nhật ký quét trong bao nhiêu ngày <HelpTip text="Nhật ký quét chỉ dùng để kiểm tra lỗi nguồn RSS. Giữ 30 ngày thường là đủ cho ứng dụng cá nhân." /></span>
-          <input type="number" min="7" max="365" value={settings.scan_log_retention_days} onChange={(event) => setSettings({ ...settings, scan_log_retention_days: Number(event.target.value) })} />
+          <span className="label-with-tip">Thời gian giữ nhật ký quét <HelpTip text="Nhật ký quét được xóa sau 3 ngày cùng với dữ liệu tin cũ." /></span>
+          <input type="number" value={3} disabled aria-label="Giữ nhật ký quét 3 ngày" />
         </label>
         <label>
           <span className="label-with-tip">Giới hạn database để cảnh báo (MB) <HelpTip text="Nhập giới hạn dung lượng theo gói Supabase đang dùng. Hệ thống cảnh báo từ 70% và cảnh báo mạnh từ 80%." /></span>
           <input type="number" min="100" max="1048576" value={settings.database_limit_mb} onChange={(event) => setSettings({ ...settings, database_limit_mb: Number(event.target.value) })} />
         </label>
         <label>
-          <span className="label-with-tip">Khoảng quét mong muốn (phút) <HelpTip text="Thông số tham chiếu cho lịch quét. GitHub Actions hiện quét khoảng hai lần mỗi giờ." /></span>
-          <input type="number" min="15" max="1440" value={settings.scan_interval_minutes} onChange={(event) => setSettings({ ...settings, scan_interval_minutes: Number(event.target.value) })} />
+          <span className="label-with-tip">Chu kỳ quét (phút) <HelpTip text="Supabase Cron quét từng nguồn mỗi 3 giờ; GitHub Actions không còn chạy lịch tự động." /></span>
+          <input type="number" value={180} disabled aria-label="Quét mỗi 180 phút" />
         </label>
         <label>
           <span className="label-with-tip">Thứ tự hiển thị <HelpTip text="Chọn cách sắp xếp mặc định khi mở trang tin. Bạn vẫn có thể đổi tạm thời trong Bộ lọc." /></span>
