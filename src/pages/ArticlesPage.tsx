@@ -18,7 +18,7 @@ import type { ArticleFilters, UserSettings } from '../types/domain';
 import { ARTICLE_SORT_OPTIONS } from '../config/articleSort';
 import { errorMessage } from '../utils/error';
 
-const INITIAL: ArticleFilters = { search: '', sort: 'newest', state: 'all', category: '', sourceId: '', minScore: 0, fromDate: '', toDate: '', page: 1, pageSize: 20 };
+const INITIAL: ArticleFilters = { search: '', sort: 'relevance', state: 'all', category: '', sourceId: '', minScore: 0, fromDate: '', toDate: '', page: 1, pageSize: 20 };
 
 export function ArticlesPage() {
   const { user } = useAuth();
@@ -32,6 +32,8 @@ export function ArticlesPage() {
   const queryFilters = { ...filters, search: debouncedSearch };
   const articles = useQuery({ queryKey: ['articles', queryFilters], queryFn: () => fetchArticles(queryFilters), placeholderData: (previous) => previous });
   const sources = useQuery({ queryKey: ['sources'], queryFn: listSources });
+  const noteworthyFilters: ArticleFilters = { ...INITIAL, sort: 'relevance', minScore: 70, pageSize: 5, page: 1 };
+  const noteworthy = useQuery({ queryKey: ['articles-noteworthy'], queryFn: () => fetchArticles(noteworthyFilters), staleTime: 60_000 });
   const settings = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
@@ -49,7 +51,7 @@ export function ArticlesPage() {
     if (!settingsApplied && settings.data) {
       setFilters((current) => ({
         ...current,
-        sort: settings.data.default_sort,
+        sort: 'relevance',
         pageSize: settings.data.page_size,
         page: 1,
       }));
@@ -77,6 +79,7 @@ export function ArticlesPage() {
       setNotice(`Đã quét ${result.scanned} nguồn, thêm ${result.inserted} bài, phát hiện ${result.duplicates} bản trùng${result.errors ? `; ${result.errors} nguồn có lỗi` : ''}.`);
       await queryClient.invalidateQueries({ queryKey: ['articles'] });
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      await queryClient.invalidateQueries({ queryKey: ['articles-noteworthy'] });
     } catch (error) {
       setNotice(errorMessage(error));
     }
@@ -87,7 +90,7 @@ export function ArticlesPage() {
       <section className="page-heading">
         <div>
           <h1>Tin dành cho bạn <HelpTip text="Danh sách đã được lọc theo sở thích. Thứ tự mặc định lấy từ Cài đặt và có thể đổi tạm thời trong Bộ lọc." /></h1>
-          <p>{articles.data?.count ?? 0} bài phù hợp • Đang xếp: {activeSortLabel}</p>
+          <p>{articles.data?.count ?? 0} bài trong kho • Đang xếp: {activeSortLabel}</p>
         </div>
         <div className="heading-actions">
           <button title="Lấy bài mới từ tất cả nguồn RSS đang bật" onClick={() => void scanAll()}>Quét ngay</button>
@@ -95,6 +98,28 @@ export function ArticlesPage() {
           <Link className="button" to="/help" title="Mở hướng dẫn đọc tin và đặt từ khóa">Trợ giúp</Link>
         </div>
       </section>
+
+      <div className="source-strip" aria-label="Chọn nhanh nguồn tin">
+        <button className={!filters.sourceId ? 'active' : ''} onClick={() => change({ sourceId: '', page: 1 })}>Tất cả</button>
+        {(sources.data ?? []).filter((source) => source.enabled).map((source) => (
+          <button key={source.id} className={filters.sourceId === source.id ? 'active' : ''} onClick={() => change({ sourceId: source.id, page: 1 })}>{source.name.replace(/ - .*/, '')}</button>
+        ))}
+      </div>
+
+      {!!noteworthy.data?.items.length && !filters.search && !filters.sourceId && filters.page === 1 && (
+        <section className="noteworthy-strip">
+          <strong>★ Đáng chú ý</strong>
+          <div>
+            {noteworthy.data.items.slice(0, 5).map((item, index) => (
+              <button key={item.id} title={item.title} onClick={() => {
+                const currentIndex = articles.data?.items.findIndex((article) => article.id === item.id) ?? -1;
+                if (currentIndex >= 0) setSummaryIndex(currentIndex);
+                else window.open(item.original_url, '_blank', 'noopener,noreferrer');
+              }}><b>{Math.round(item.relevance_score)}</b> {item.title}</button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="search-toolbar">
         <input title="Tìm trong tiêu đề và mô tả, không phân biệt dấu tiếng Việt" aria-label="Tìm kiếm" placeholder="Tìm không phân biệt dấu theo tiêu đề hoặc mô tả…" value={filters.search} onChange={(event) => change({ search: event.target.value, page: 1 })} />
