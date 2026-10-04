@@ -20,6 +20,8 @@ export function SourcesPage() {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const refresh = () => client.invalidateQueries({ queryKey: ['sources'] });
+  const existingFeedUrls = new Set((sources.data ?? []).map((source) => source.feed_url.trim()));
+  const availableCatalog = (catalog.data ?? []).filter((item) => !existingFeedUrls.has(item.feed_url.trim()));
 
   const save = useMutation({
     mutationFn: () => saveSource({ ...form, id: editingId ?? undefined } as Partial<Source> & Pick<Source, 'name' | 'feed_url' | 'category'>),
@@ -91,6 +93,11 @@ export function SourcesPage() {
   }
 
   async function addCatalog(feedUrl: string, name: string, category: string, priority: number) {
+    const existing = (sources.data ?? []).find((source) => source.feed_url.trim() === feedUrl.trim());
+    if (existing) {
+      setMessage(`Nguồn “${existing.name}” đã có trong danh sách của bạn. Không cần thêm lại.`);
+      return;
+    }
     setForm({ ...EMPTY, feed_url: feedUrl, name, category, priority });
     setEditingId(null);
     setResult(null);
@@ -200,17 +207,21 @@ export function SourcesPage() {
       <section className="panel">
         <h2>Danh mục nguồn gợi ý <HelpTip text="Các nguồn trong danh mục vẫn được kiểm tra thực tế trước khi thêm vào tài khoản." /></h2>
         <p className="muted">URL có thể thay đổi theo từng báo. Mỗi nguồn luôn được kiểm tra thực tế trước khi thêm.</p>
-        <div className="catalog-grid">
-          {catalog.data?.map((item) => (
-            <article key={item.id}>
-              <strong>{item.name}</strong>
-              <span>{item.category}</span>
-              <small>{item.feed_url}</small>
-              <span className={item.verification_status === 'verified' ? 'status-ok' : 'status-warn'}>{item.verification_status === 'verified' ? 'Đã xác nhận' : 'Cần kiểm tra lúc thêm'}</span>
-              <button title="Đưa nguồn lên biểu mẫu, kiểm tra feed rồi mới lưu" onClick={() => void addCatalog(item.feed_url, item.name, item.category, item.priority)}>Kiểm tra & thêm</button>
-            </article>
-          ))}
-        </div>
+        {!catalog.isLoading && availableCatalog.length === 0 ? (
+          <p className="muted">Bạn đã có toàn bộ nguồn trong danh mục gợi ý.</p>
+        ) : (
+          <div className="catalog-grid">
+            {availableCatalog.map((item) => (
+              <article key={item.id}>
+                <strong>{item.name}</strong>
+                <span>{item.category}</span>
+                <small>{item.feed_url}</small>
+                <span className={item.verification_status === 'verified' ? 'status-ok' : 'status-warn'}>{item.verification_status === 'verified' ? 'Đã xác nhận' : 'Cần kiểm tra lúc thêm'}</span>
+                <button title="Đưa nguồn lên biểu mẫu, kiểm tra feed rồi mới lưu" onClick={() => void addCatalog(item.feed_url, item.name, item.category, item.priority)}>Kiểm tra & thêm</button>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
