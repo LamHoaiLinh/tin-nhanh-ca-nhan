@@ -13,7 +13,7 @@ export interface ScoreBreakdown { category: number; keywords: number; source: nu
 function includesPhrase(haystack: string, keyword: string): boolean { return haystack.includes(normalizeForSearch(keyword)); }
 export function freshnessScore(publishedAt: string, halfLifeHours: number, now = new Date()): number {
   const ageHours = Math.max(0, (now.getTime() - new Date(publishedAt).getTime()) / 3_600_000);
-  return 20 * Math.exp(-ageHours / Math.max(1, halfLifeHours));
+  return 10 * Math.exp(-ageHours / Math.max(1, halfLifeHours));
 }
 
 export function scoreArticle(input: ScoreInput, now = new Date()): ScoreBreakdown {
@@ -39,8 +39,8 @@ export function scoreArticle(input: ScoreInput, now = new Date()): ScoreBreakdow
       negative += (inTitle ? rule.weight * 5 : 0) + (inDescription ? rule.weight * 2 : 0);
     }
   }
-  const category = Math.max(0, Math.min(25, input.categoryWeight / 10 * 25));
-  const source = Math.max(0, Math.min(15, input.sourcePriority / 10 * 15));
+  const category = Math.max(0, Math.min(35, Math.max(0, input.categoryWeight - 2) / 8 * 35));
+  const source = Math.max(0, Math.min(5, input.sourcePriority / 10 * 5));
   const freshness = freshnessScore(input.publishedAt, input.halfLifeHours, now);
   let quality = 0;
   if (input.hasImage) quality += 2;
@@ -49,8 +49,8 @@ export function scoreArticle(input: ScoreInput, now = new Date()): ScoreBreakdow
   if (input.hasAuthor) quality += 1;
   if (input.isHttps) quality += 1;
   if (!/(sốc|kinh hoàng|không thể tin|giật mình|chấn động)/i.test(input.title)) quality += 2;
-  const total = hidden ? 0 : Math.max(0, Math.min(100, category + Math.min(30, positive) + source + freshness + quality - negative));
-  return { category, keywords: Math.min(30, positive), source, freshness, quality, negative, total, matchedKeywords: [...matched], hidden };
+  const total = hidden ? 0 : Math.max(0, Math.min(100, category + Math.min(40, positive) + source + freshness + quality - negative));
+  return { category, keywords: Math.min(40, positive), source, freshness, quality, negative, total, matchedKeywords: [...matched], hidden };
 }
 
 export function defaultHalfLife(category: string): number {
