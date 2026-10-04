@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ArticleFeedItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/date';
 import { copyText } from '../utils/clipboard';
@@ -17,6 +17,13 @@ interface Props {
 
 export function ArticleCard({ article, onSave, onOpen, onSummarize, onToggleRead, onHide, onBlockSource, onBlockTopic }: Props) {
   const [copyLabel, setCopyLabel] = useState('Sao chép link');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const close = (event: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
   const breakdown = article.score_breakdown ?? {};
   const scoreTooltip = `Chuyên mục: ${Math.round(breakdown.category ?? 0)}\nTừ khóa: ${Math.round(breakdown.keywords ?? 0)}\nNguồn: ${Math.round(breakdown.source ?? 0)}\nĐộ mới: ${Math.round(breakdown.freshness ?? 0)}\nChất lượng: ${Math.round(breakdown.quality ?? 0)}\nTổng: ${Math.round(article.relevance_score)}`;
 
@@ -60,19 +67,24 @@ export function ArticleCard({ article, onSave, onOpen, onSummarize, onToggleRead
         </a>
         <p className="article-description">{article.description}</p>
         <div className="tag-row">
-          <span className="score" title={scoreTooltip}>{Math.round(article.relevance_score)} điểm</span>
+          <span className="score" title={scoreTooltip}>{Math.round(article.relevance_score)}</span>
           {article.duplicate_count > 0 && <span className="duplicate-label" title="Hệ thống phát hiện nhiều nguồn đăng nội dung gần giống và đã chọn một bài đại diện">{article.duplicate_count + 1} nguồn cùng đăng</span>}
           {article.matched_keywords?.slice(0, 4).map((keyword) => <span className="keyword" title="Từ khóa khớp quy tắc sở thích" key={keyword}>{keyword}</span>)}
         </div>
-        <div className="card-actions">
-          <a title="Mở nội dung đầy đủ trên website của báo" className="button primary" href={article.original_url} target="_blank" rel="noopener noreferrer" onClick={onOpen}>Đọc bài gốc</a>
-          <button className="summary-button" title="Tự động đọc, chọn ý chính và mở bản tóm tắt trong chế độ đọc liên tục" onClick={onSummarize}>Tóm tắt</button>
-          <button title="Sao chép chính xác đường dẫn bài báo gốc" onClick={() => void copyOriginalLink()}>{copyLabel}</button>
-          <button title="Lưu bài để xem lại sau" onClick={onSave}>{article.is_saved ? 'Bỏ lưu' : 'Lưu'}</button>
-          <button title="Đổi trạng thái đã đọc hoặc chưa đọc" onClick={onToggleRead}>{article.is_read ? 'Chưa đọc' : 'Đã đọc'}</button>
-          <button className="danger-link" title="Ẩn riêng bài này khỏi danh sách" onClick={onHide}>Ẩn</button>
-          <button title="Ngừng lấy bài mới từ toàn bộ nguồn này" onClick={onBlockSource}>Tắt nguồn</button>
-          <button title="Tạo quy tắc chặn từ khóa cho các lần quét sau" onClick={onBlockTopic}>Chặn chủ đề</button>
+        <div className="card-actions compact-actions">
+          <button className="summary-button" title="Tóm tắt bài" onClick={onSummarize}>Tóm tắt</button>
+          <button className={article.is_saved ? 'saved-action' : ''} title={article.is_saved ? 'Bỏ lưu' : 'Lưu bài'} onClick={onSave} aria-label={article.is_saved ? 'Bỏ lưu' : 'Lưu bài'}>{article.is_saved ? '★' : '☆'}</button>
+          <div className="more-actions" ref={menuRef}>
+            <button className="more-button" title="Thêm thao tác" aria-label="Thêm thao tác" onClick={() => setMenuOpen((value) => !value)}>⋯</button>
+            {menuOpen && <div className="more-menu">
+              <a href={article.original_url} target="_blank" rel="noopener noreferrer" onClick={onOpen}>↗ Đọc bài gốc</a>
+              <button onClick={() => void copyOriginalLink()}>⧉ {copyLabel}</button>
+              <button onClick={onToggleRead}>{article.is_read ? '○ Đánh dấu chưa đọc' : '✓ Đánh dấu đã đọc'}</button>
+              <button onClick={onHide}>− Ẩn bài này</button>
+              <button onClick={onBlockSource}>× Tắt nguồn</button>
+              <button onClick={onBlockTopic}>⊘ Chặn chủ đề</button>
+            </div>}
+          </div>
         </div>
       </div>
     </article>
