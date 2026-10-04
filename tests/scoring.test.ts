@@ -5,5 +5,5 @@ describe('chấm điểm',()=>{
   it('từ khóa tích cực tăng điểm',()=>{const plain=scoreArticle(base,new Date('2026-07-08T09:00:00Z')).total;const boosted=scoreArticle({...base,rules:[{keyword:'hóa đơn điện tử',rule_type:'positive' as const,target_field:'all' as const,weight:5,enabled:true}]},new Date('2026-07-08T09:00:00Z')).total;expect(boosted).toBeGreaterThan(plain);});
   it('từ khóa tiêu cực giảm điểm',()=>expect(scoreArticle({...base,rules:[{keyword:'hóa đơn',rule_type:'negative' as const,target_field:'title' as const,weight:5,enabled:true}]},new Date('2026-07-08T09:00:00Z')).negative).toBeGreaterThan(0));
   it('từ khóa loại tuyệt đối ẩn bài',()=>expect(scoreArticle({...base,rules:[{keyword:'hóa đơn',rule_type:'negative' as const,target_field:'all' as const,weight:100,enabled:true}]},new Date('2026-07-08T09:00:00Z')).hidden).toBe(true));
-  it('độ mới suy giảm theo thời gian',()=>expect(freshnessScore('2026-07-08T08:00:00Z',24,new Date('2026-07-09T08:00:00Z'))).toBeCloseTo(20*Math.exp(-1)));
+  it('độ mới suy giảm theo thời gian',()=>expect(freshnessScore('2026-07-08T08:00:00Z',24,new Date('2026-07-09T08:00:00Z'))).toBeCloseTo(10*Math.exp(-1)));
 });
