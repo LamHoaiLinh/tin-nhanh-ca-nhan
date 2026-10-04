@@ -26,13 +26,15 @@ export function ArticlesPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [summaryIndex, setSummaryIndex] = useState<number | null>(null);
+  const [noteworthyOpen, setNoteworthyOpen] = useState(false);
+  const [noteworthySummaryIndex, setNoteworthySummaryIndex] = useState<number | null>(null);
   const [settingsApplied, setSettingsApplied] = useState(false);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
   const queryClient = useQueryClient();
   const queryFilters = { ...filters, search: debouncedSearch };
   const articles = useQuery({ queryKey: ['articles', queryFilters], queryFn: () => fetchArticles(queryFilters), placeholderData: (previous) => previous });
   const sources = useQuery({ queryKey: ['sources'], queryFn: listSources });
-  const noteworthyFilters: ArticleFilters = { ...INITIAL, sort: 'relevance', minScore: 70, pageSize: 5, page: 1 };
+  const noteworthyFilters: ArticleFilters = { ...INITIAL, sort: 'relevance', minScore: 70, pageSize: 10, page: 1 };
   const noteworthy = useQuery({ queryKey: ['articles-noteworthy'], queryFn: () => fetchArticles(noteworthyFilters), staleTime: 60_000 });
   const settings = useQuery({
     queryKey: ['settings'],
@@ -107,18 +109,16 @@ export function ArticlesPage() {
       </div>
 
       {!!noteworthy.data?.items.length && !filters.search && !filters.sourceId && filters.page === 1 && (
-        <section className="noteworthy-strip">
-          <strong>★ Đáng chú ý</strong>
-          <div>
-            {noteworthy.data.items.slice(0, 5).map((item, index) => (
-              <button key={item.id} title={item.title} onClick={() => {
-                const currentIndex = articles.data?.items.findIndex((article) => article.id === item.id) ?? -1;
-                if (currentIndex >= 0) setSummaryIndex(currentIndex);
-                else window.open(item.original_url, '_blank', 'noopener,noreferrer');
-              }}><b>{Math.round(item.relevance_score)}</b> {item.title}</button>
-            ))}
-          </div>
-        </section>
+        <button
+          className="noteworthy-trigger"
+          type="button"
+          onClick={() => setNoteworthyOpen(true)}
+          title="Mở 10 tin đáng chú ý nhất"
+        >
+          <span>★ Đáng chú ý</span>
+          <b>{Math.min(10, noteworthy.data.items.length)}</b>
+          <small>Mở danh sách</small>
+        </button>
       )}
 
       <section className="search-toolbar">
@@ -169,11 +169,52 @@ export function ArticlesPage() {
       )}
 
 
+      {noteworthyOpen && (
+        <div className="noteworthy-backdrop" onMouseDown={() => setNoteworthyOpen(false)}>
+          <section className="noteworthy-panel" role="dialog" aria-modal="true" aria-label="Tin đáng chú ý" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="noteworthy-panel-head">
+              <div>
+                <strong>★ 10 tin đáng chú ý</strong>
+                <small>Ưu tiên theo mức phù hợp với sở thích của anh</small>
+              </div>
+              <button type="button" aria-label="Đóng" title="Đóng" onClick={() => setNoteworthyOpen(false)}>×</button>
+            </header>
+            <div className="noteworthy-list">
+              {(noteworthy.data?.items ?? []).slice(0, 10).map((item, index) => (
+                <article className="noteworthy-row" key={item.id}>
+                  <span className="noteworthy-rank">{index + 1}</span>
+                  <div className="noteworthy-copy">
+                    <div className="noteworthy-meta">
+                      <b>{Math.round(item.relevance_score)}</b>
+                      <span>{item.source_name}</span>
+                    </div>
+                    <a href={item.original_url} target="_blank" rel="noopener noreferrer" onClick={() => void mutateState(item.id, { is_read: true, opened_at: new Date().toISOString() })}>
+                      {item.title}
+                    </a>
+                  </div>
+                  <button type="button" className="noteworthy-summary" onClick={() => { setNoteworthyOpen(false); setNoteworthySummaryIndex(index); }}>
+                    Tóm tắt
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       <ArticleSummaryModal
         articles={articles.data?.items ?? []}
         currentIndex={summaryIndex}
         onClose={() => setSummaryIndex(null)}
         onNavigate={setSummaryIndex}
+        onMarkRead={(article) => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
+      />
+
+      <ArticleSummaryModal
+        articles={noteworthy.data?.items ?? []}
+        currentIndex={noteworthySummaryIndex}
+        onClose={() => setNoteworthySummaryIndex(null)}
+        onNavigate={setNoteworthySummaryIndex}
         onMarkRead={(article) => void mutateState(article.id, { is_read: true, opened_at: new Date().toISOString() })}
       />
 
