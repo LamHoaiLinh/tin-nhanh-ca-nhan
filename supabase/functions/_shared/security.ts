@@ -22,24 +22,52 @@ export async function assertSafeUrl(input:string):Promise<URL>{
   if(url.username||url.password)throw new Error('URL không được chứa tài khoản hoặc mật khẩu.');
   await assertDnsPublic(url.hostname); return url;
 }
-export async function fetchSafe(input:string, allowedContentTypes:string[], redirects=0):Promise<{url:string;contentType:string;body:string;status:number}>{
+export async function fetchSafe(input:string,allowedContentTypes:string[],redirects=0):Promise<{url:string;contentType:string;body:string;status:number}>{
   if(redirects>3)throw new Error('Nguồn chuyển hướng quá 3 lần.');
   const url=await assertSafeUrl(input);
-  const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),10_000);
-  let response:Response;
-  try{response=await fetch(url,{redirect:'manual',signal:controller.signal,headers:{'User-Agent':'TinNhanhCaNhan/1.0 (+RSS reader)','Accept':'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.8'}});}catch(error){if((error as Error).name==='AbortError')throw new Error('Nguồn phản hồi quá 10 giây.');throw new Error(`Không thể kết nối nguồn: ${(error as Error).message}`);}finally{clearTimeout(timer);}
-  if([301,302,303,307,308].includes(response.status)){
-    const location=response.headers.get('location'); if(!location)throw new Error('Nguồn chuyển hướng nhưng thiếu địa chỉ đích.');
-    return fetchSafe(new URL(location,url).toString(),allowedContentTypes,redirects+1);
+  const controller=new AbortController();
+  // Cover the entire response body, not just the initial response headers.
+  const timer=setTimeout(()=>controller.abort(),12_000);
+  try{
+    const response=await fetch(url,{
+      redirect:'manual',signal:controller.signal,
+      headers:{'User-Agent':'TinNhanhCaNhan/1.0 (+RSS reader)','Accept':'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.8'}
+    });
+    if([301,302,303,307,308].includes(response.status)){
+      const location=response.headers.get('location');
+      if(!location)throw new Error('Nguồn chuyển hướng nhưng thiếu địa chỉ đích.');
+      return await fetchSafe(new URL(location,url).toString(),allowedContentTypes,redirects+1);
+    }
+    if(!response.ok){
+      const messages:Record<number,string>={403:'Nguồn từ chối truy cập (403).',404:'Không tìm thấy RSS (404).',429:'Nguồn giới hạn quá nhiều yêu cầu (429).',500:'Máy chủ nguồn đang lỗi (500).'};
+      throw new Error(messages[response.status]??`Nguồn trả về HTTP ${response.status}.`);
+    }
+    const contentType=(response.headers.get('content-type')??'').toLowerCase();
+    if(allowedContentTypes.length&&!allowedContentTypes.some(type=>contentType.includes(type)))
+      throw new Error(`Định dạng phản hồi không được chấp nhận: ${contentType||'không xác định'}.`);
+    const reader=response.body?.getReader();
+    if(!reader)throw new Error('Nguồn không có nội dung.');
+    const chunks:Uint8Array[]=[];let total=0;
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      if(value){
+        total+=value.byteLength;
+        if(total>MAX_BYTES){await reader.cancel();throw new Error('Phản hồi vượt quá giới hạn 2 MB.');}
+        chunks.push(value);
+      }
+    }
+    const all=new Uint8Array(total);let offset=0;
+    for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.length;}
+    let body='';
+    try{body=new TextDecoder('utf-8',{fatal:true}).decode(all);}
+    catch{body=new TextDecoder('windows-1252').decode(all);}
+    return {url:response.url||url.toString(),contentType,body,status:response.status};
+  }catch(error){
+    if(controller.signal.aborted)throw new Error('Nguồn phản hồi quá 12 giây.');
+    if(error instanceof TypeError)throw new Error(`Không thể kết nối nguồn: ${error.message}`);
+    throw error;
+  }finally{
+    clearTimeout(timer);
   }
-  if(!response.ok){const messages:Record<number,string>={403:'Nguồn từ chối truy cập (403).',404:'Không tìm thấy RSS (404).',429:'Nguồn giới hạn quá nhiều yêu cầu (429).',500:'Máy chủ nguồn đang lỗi (500).'};throw new Error(messages[response.status]??`Nguồn trả về HTTP ${response.status}.`);}
-  const contentType=(response.headers.get('content-type')??'').toLowerCase();
-  if(allowedContentTypes.length && !allowedContentTypes.some((type)=>contentType.includes(type))) throw new Error(`Định dạng phản hồi không được chấp nhận: ${contentType||'không xác định'}.`);
-  const reader=response.body?.getReader(); if(!reader)throw new Error('Nguồn không có nội dung.');
-  const chunks:Uint8Array[]=[]; let total=0;
-  while(true){const {done,value}=await reader.read();if(done)break;if(value){total+=value.byteLength;if(total>MAX_BYTES){await reader.cancel();throw new Error('Phản hồi vượt quá giới hạn 2 MB.');}chunks.push(value);}}
-  const all=new Uint8Array(total);let offset=0;for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.length;}
-  let body='';
-  try{body=new TextDecoder('utf-8',{fatal:true}).decode(all);}catch{body=new TextDecoder('windows-1252').decode(all);}
-  return {url:response.url||url.toString(),contentType,body,status:response.status};
 }
