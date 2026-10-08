@@ -25,5 +25,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.5.6
+      - name: Check RSS Edge Function
+        run: deno check --config deno.json supabase/functions/scan-rss/index.ts
       - name: Check summarize Edge Function
         run: deno check --config supabase/functions/summarize-article/deno.json supabase/functions/summarize-article/index.ts
