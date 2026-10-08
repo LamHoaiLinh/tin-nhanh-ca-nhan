@@ -25,6 +25,7 @@ export function ArticlesPage() {
   const [filters, setFilters] = useState(INITIAL);
   const [filterOpen, setFilterOpen] = useState(false);
   const [notice, setNotice] = useState('');
+  const [scanBusy, setScanBusy] = useState(false);
   const [summaryIndex, setSummaryIndex] = useState<number | null>(null);
   const [noteworthyOpen, setNoteworthyOpen] = useState(false);
   const [noteworthySummaryIndex, setNoteworthySummaryIndex] = useState<number | null>(null);
@@ -75,15 +76,25 @@ export function ArticlesPage() {
   useKeyboardShortcuts({ previous: goPrevious, next: goNext });
 
   async function scanAll() {
-    setNotice('Đang quét nguồn tin…');
+    if (scanBusy) return;
+    setScanBusy(true);
+    setNotice('Đang cập nhật từng nguồn báo…');
     try {
-      const result = await scanSource();
+      const result = await scanSource(undefined, (finished, total) => {
+        setNotice(`Đang quét tin: ${finished}/${total} nguồn hoàn tất…`);
+        if (finished % 2 === 0 || finished === total) {
+          void queryClient.invalidateQueries({ queryKey: ['articles'] });
+          void queryClient.invalidateQueries({ queryKey: ['articles-noteworthy'] });
+        }
+      });
       setNotice(`Đã quét ${result.scanned} nguồn, thêm ${result.inserted} bài, phát hiện ${result.duplicates} bản trùng${result.errors ? `; ${result.errors} nguồn có lỗi` : ''}.`);
       await queryClient.invalidateQueries({ queryKey: ['articles'] });
       await queryClient.invalidateQueries({ queryKey: ['sources'] });
       await queryClient.invalidateQueries({ queryKey: ['articles-noteworthy'] });
     } catch (error) {
       setNotice(errorMessage(error));
+    } finally {
+      setScanBusy(false);
     }
   }
 
@@ -95,7 +106,7 @@ export function ArticlesPage() {
           <p>{articles.data?.count ?? 0} bài trong kho • Đang xếp: {activeSortLabel}</p>
         </div>
         <div className="heading-actions">
-          <button title="Lấy bài mới từ tất cả nguồn RSS đang bật" onClick={() => void scanAll()}>Quét ngay</button>
+          <button disabled={scanBusy} title="Lấy bài mới từ tất cả nguồn RSS đang bật" onClick={() => void scanAll()}>{scanBusy ? "Đang quét…" : "Quét ngay"}</button>
           <button className="button primary" title="Lọc theo trạng thái, nguồn, chuyên mục, điểm hoặc ngày đăng" onClick={() => setFilterOpen(true)}>Bộ lọc</button>
           <Link className="button" to="/help" title="Mở hướng dẫn đọc tin và đặt từ khóa">Trợ giúp</Link>
         </div>
