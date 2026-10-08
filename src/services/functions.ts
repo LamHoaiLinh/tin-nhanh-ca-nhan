@@ -2,8 +2,21 @@ import { supabase, supabasePublishableKey, supabaseUrl } from './supabase';
 import type { ArticleSummary, FeedValidationResult } from '../types/domain';
 import { ensureInsightQuestions } from '../algorithms/insightQuestions';
 
-async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(name, { body });
+async function invoke<T>(name: string, body: Record<string, unknown>, timeoutMs = 45_000): Promise<T> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  let data: unknown;
+  let error: { message: string; context?: unknown } | null;
+  try {
+    const response = await supabase.functions.invoke(name, { body, signal: controller.signal });
+    data = response.data;
+    error = response.error;
+  } catch (cause) {
+    if (controller.signal.aborted) throw new Error('Quét quá thời gian cho phép; nguồn này sẽ được thử lại sau.');
+    throw cause;
+  } finally {
+    window.clearTimeout(timer);
+  }
   if (error) {
     let message = error.message;
     const context = (error as unknown as { context?: Response }).context;
@@ -76,5 +89,40 @@ async function summarizeDirect(articleId: string, seed: number): Promise<Article
 
 export const validateFeed = (url: string) => invoke<FeedValidationResult>('validate-feed', { url });
 export const discoverFeed = (url: string) => invoke<{ feeds: Array<FeedValidationResult & { url: string }> }>('discover-feed', { url });
-export const scanSource = (sourceId?: string) => invoke<{ scanned: number; inserted: number; duplicates: number; errors: number }>('scan-rss', sourceId ? { sourceId } : { all: true });
+export type ScanProgress = (finished: number, total: number) => void;
+type ScanResult = { scanned: number; inserted: number; duplicates: number; errors: number };
+
+// Keep each Edge Function invocation small; the previous all-sources request timed out.
+export async function scanSource(sourceId?: string, onProgress?: ScanProgress): Promise<ScanResult> {
+  if (sourceId) return invoke<ScanResult>('scan-rss', { sourceId }, 45_000);
+
+  const { data: feeds, error } = await supabase.from('sources')
+    .select('id').eq('enabled', true).order('last_scanned_at', { ascending: true, nullsFirst: true });
+  if (error) throw error;
+  const ids = (feeds ?? []).map(feed => feed.id);
+  const result: ScanResult = { scanned: 0, inserted: 0, duplicates: 0, errors: 0 };
+  if (!ids.length) return result;
+  let cursor = 0;
+  let finished = 0;
+  const workers = Array.from({ length: Math.min(2, ids.length) }, async () => {
+    while (cursor < ids.length) {
+      const id = ids[cursor++];
+      try {
+        const item = await invoke<ScanResult>('scan-rss', { sourceId: id }, 45_000);
+        result.scanned += item.scanned;
+        result.inserted += item.inserted;
+        result.duplicates += item.duplicates;
+        result.errors += item.errors;
+      } catch {
+        result.scanned += 1;
+        result.errors += 1;
+      } finally {
+        finished += 1;
+        onProgress?.(finished, ids.length);
+      }
+    }
+  });
+  await Promise.all(workers);
+  return result;
+}
 export const summarizeArticle = (articleId: string, seed = Date.now()) => summarizeDirect(articleId, seed);
