@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { ensureDefaultSources } from '../services/bootstrap';
-import { scanSource } from '../services/functions';
 import { errorMessage } from '../utils/error';
 
 const BOOTSTRAP_VERSION = '2026-07-09-v1';
-const AUTO_SCAN_INTERVAL_MS = 15 * 60 * 1000;
 
+// RSS updates are scheduled server-side every three hours. Do not launch an
+// expensive full scan on every sign-in or browser refresh.
 export function StartupBootstrap() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -16,61 +16,36 @@ export function StartupBootstrap() {
 
   useEffect(() => {
     if (!user) return;
-    const userId = user.id;
+    const seedKey = `tin-nhanh:default-sources:${BOOTSTRAP_VERSION}:${user.id}`;
+    if (localStorage.getItem(seedKey) === 'done') return;
     let cancelled = false;
+    setKind('busy');
+    setMessage('Đang kiểm tra nguồn báo mặc định…');
 
-    async function bootstrap() {
-      const seedKey = `tin-nhanh:default-sources:${BOOTSTRAP_VERSION}:${userId}`;
-      const scanKey = `tin-nhanh:last-auto-scan:${userId}`;
-      const needsSeed = localStorage.getItem(seedKey) !== 'done';
-      const lastScan = Number(localStorage.getItem(scanKey) ?? '0');
-      const needsScan = !Number.isFinite(lastScan) || Date.now() - lastScan >= AUTO_SCAN_INTERVAL_MS;
-
-      if (!needsSeed && !needsScan) return;
-
-      setKind('busy');
-      setMessage(needsSeed ? 'Đang chuẩn bị các nguồn báo mặc định và quét tin lần đầu…' : 'Đang cập nhật tin mới từ các nguồn đang bật…');
-
+    async function seedSources() {
       try {
-        let inserted = 0;
-        if (needsSeed) {
-          const seeded = await ensureDefaultSources(userId);
-          inserted = seeded.inserted;
-          localStorage.setItem(seedKey, 'done');
-        }
-
-        let scanSummary = '';
-        if (needsScan || needsSeed) {
-          const result = await scanSource();
-          localStorage.setItem(scanKey, String(Date.now()));
-          scanSummary = `Đã quét ${result.scanned} nguồn, thêm ${result.inserted} bài mới${result.errors ? `, ${result.errors} nguồn cần kiểm tra` : ''}.`;
-        }
-
+        const seeded = await ensureDefaultSources(user!.id);
+        localStorage.setItem(seedKey, 'done');
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['sources'] }),
           queryClient.invalidateQueries({ queryKey: ['articles'] }),
           queryClient.invalidateQueries({ queryKey: ['catalog'] }),
         ]);
-
         if (!cancelled) {
           setKind('success');
-          setMessage(`${inserted ? `Đã thêm ${inserted} nguồn mặc định. ` : ''}${scanSummary}`.trim());
-          window.setTimeout(() => {
-            if (!cancelled) setMessage('');
-          }, 9000);
+          setMessage(`Đã sẵn sàng ${seeded.total} nguồn mặc định. Tin mới được cập nhật tự động; bấm “Quét ngay” để làm mới thủ công.`);
+          window.setTimeout(() => { if (!cancelled) setMessage(''); }, 6000);
         }
       } catch (error) {
         if (!cancelled) {
           setKind('error');
-          setMessage(`Không thể hoàn tất quét tin ban đầu: ${errorMessage(error)}`);
+          setMessage(`Không thể đồng bộ nguồn mặc định: ${errorMessage(error)}`);
         }
       }
     }
 
-    void bootstrap();
-    return () => {
-      cancelled = true;
-    };
+    void seedSources();
+    return () => { cancelled = true; };
   }, [queryClient, user]);
 
   if (!message) return null;
